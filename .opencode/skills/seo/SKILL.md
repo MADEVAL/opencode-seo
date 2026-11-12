@@ -98,6 +98,25 @@ memory or other copies on disk. Run
 confirmed). If the output reports the ledger as stale, check
 status.search.google.com before stating that a rollout is complete.
 
+## OpenCode Subagent Protocol
+
+Use the `subagent` tool for specialist work. Children always run in the background.
+
+- Launch independent specialists in the same step so they run in parallel.
+- Every call needs `agent`, `description`, and `prompt`. Put the URL, output directory,
+  and exact scope in the prompt.
+- Do not launch the same specialist twice.
+- Children cannot launch children because `subagent_depth` is 1.
+- Keep collecting while children run. Do not present the final report until every
+  launched child has reported or failed.
+- Merge reports as they arrive. If a child fails, record the failure and continue with
+  the rest.
+- Follow up with the returned `sessionID` only when a report is incomplete.
+- If no child can launch, run that specialist inline and label the section as fallback.
+
+Example:
+`subagent({"agent": "seo-technical", "description": "Technical SEO", "prompt": "Audit <url> and write findings to <domain>-audit/findings/technical.md."})`
+
 ## Synthesis Methodology
 
 Audits are not just findings, they are findings synthesized into a coherent

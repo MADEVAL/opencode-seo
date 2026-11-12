@@ -62,6 +62,25 @@ RUNTIME_PARAGRAPH = (
     "needed. Do not invoke bundled scripts with a bare Python interpreter."
 )
 
+SUBAGENT_PROTOCOL = (
+    "## OpenCode Subagent Protocol\n\n"
+    "Use the `subagent` tool for specialist work. Children always run in the background.\n\n"
+    "- Launch independent specialists in the same step so they run in parallel.\n"
+    "- Every call needs `agent`, `description`, and `prompt`. Put the URL, output directory,\n"
+    "  and exact scope in the prompt.\n"
+    "- Do not launch the same specialist twice.\n"
+    "- Children cannot launch children because `subagent_depth` is 1.\n"
+    "- Keep collecting while children run. Do not present the final report until every\n"
+    "  launched child has reported or failed.\n"
+    "- Merge reports as they arrive. If a child fails, record the failure and continue with\n"
+    "  the rest.\n"
+    "- Follow up with the returned `sessionID` only when a report is incomplete.\n"
+    "- If no child can launch, run that specialist inline and label the section as fallback.\n\n"
+    "Example:\n"
+    '`subagent({"agent": "seo-technical", "description": "Technical SEO", '
+    '"prompt": "Audit <url> and write findings to <domain>-audit/findings/technical.md."})`'
+)
+
 
 def split_frontmatter(text: str) -> tuple[str | None, str]:
     match = re.match(r"^---\r?\n(.*?)\r?\n---\r?\n?", text, re.DOTALL)
@@ -236,6 +255,13 @@ def transform_skill(text: str, skill_name: str) -> str:
                 "back; merge each report when it arrives. If a child cannot launch, run that "
                 "specialist inline. Example: `subagent({\"agent\": \"seo-technical\", "
                 "\"description\": \"Technical SEO\", \"prompt\": \"Audit <url> and write findings.\"})`.",
+            )
+            body = body.replace("## Process", f"{SUBAGENT_PROTOCOL}\n\n## Process", 1)
+        if skill_name == "seo":
+            body = body.replace(
+                "## Synthesis Methodology",
+                f"{SUBAGENT_PROTOCOL}\n\n## Synthesis Methodology",
+                1,
             )
         return f"---\n{frontmatter}\n---\n{body}" if frontmatter else body
     return transform_body(text, skill_name, is_agent=False)

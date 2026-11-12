@@ -26,9 +26,11 @@
 - добавлены `OPENCODE_SEO_DATA_DIR`, `OPENCODE_SEO_CONFIG_DIR`,
   `OPENCODE_SEO_GOOGLE_AUTH`, `OPENCODE_SEO_LOCAL_TARGETS` с fallback на старые имена;
 - добавлены launcher-обертки `scripts/opencode-seo` и `scripts/opencode-seo.ps1`;
-- runtime `setup --skip-browser` и `run page_checks.py` проверены на реальном HTML.
+- runtime `setup --skip-browser` и `run page_checks.py` проверены на реальном HTML;
+- в OpenCode-копии `seo` и `seo-audit` добавлен протокол фоновых субагентов:
+  параллельный запуск, сбор отчетов, `sessionID`, fallback на inline.
 
-Следующая фаза: оркестрация субагентов, установщики OpenCode, MCP-расширения и документация.
+Следующая фаза: установщики OpenCode, MCP-расширения и документация.
 
 ---
 

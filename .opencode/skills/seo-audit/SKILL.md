@@ -10,6 +10,25 @@ metadata:
 
 # Full Website SEO Audit
 
+## OpenCode Subagent Protocol
+
+Use the `subagent` tool for specialist work. Children always run in the background.
+
+- Launch independent specialists in the same step so they run in parallel.
+- Every call needs `agent`, `description`, and `prompt`. Put the URL, output directory,
+  and exact scope in the prompt.
+- Do not launch the same specialist twice.
+- Children cannot launch children because `subagent_depth` is 1.
+- Keep collecting while children run. Do not present the final report until every
+  launched child has reported or failed.
+- Merge reports as they arrive. If a child fails, record the failure and continue with
+  the rest.
+- Follow up with the returned `sessionID` only when a report is incomplete.
+- If no child can launch, run that specialist inline and label the section as fallback.
+
+Example:
+`subagent({"agent": "seo-technical", "description": "Technical SEO", "prompt": "Audit <url> and write findings to <domain>-audit/findings/technical.md."})`
+
 ## Process
 
 1. **Render homepage**: use `seo({"action": "run", "script": "render_page.py", "args": ["<url>", "--mode", "auto", "--json"]})` to capture raw HTML, rendered HTML, extracted text, SPA status, and accessibility data when needed

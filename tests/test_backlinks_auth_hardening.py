@@ -104,6 +104,8 @@ def test_windows_branch_invokes_icacls_with_current_user(monkeypatch):
 
         class _Result:
             returncode = 0
+            stdout = "TEST\\test-user\n" if cmd[0] == "whoami" else ""
+            stderr = ""
 
         return _Result()
 
@@ -113,11 +115,11 @@ def test_windows_branch_invokes_icacls_with_current_user(monkeypatch):
 
     backlinks_auth._restrict_to_current_user_windows(r"C:\Users\test-user\.config\backlinks-api.json")
 
-    assert len(calls) == 1
-    cmd = calls[0]
-    assert cmd[0] == "icacls"
-    assert r"C:\Users\test-user\.config\backlinks-api.json" in cmd
-    assert any("test-user:F" in part for part in cmd)
+    assert [call[0] for call in calls] == ["whoami", "icacls", "icacls"]
+    grant = calls[1]
+    assert r"C:\Users\test-user\.config\backlinks-api.json" in grant
+    assert any("TEST\\test-user:F" in part for part in grant)
+    assert "/inheritance:r" in calls[2]
 
 
 def test_windows_branch_swallows_subprocess_failure_with_warning(monkeypatch, capsys):

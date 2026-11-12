@@ -14,7 +14,7 @@ Prerequisites:
     - Developer Token (apply at Google Ads API Center)
     - OAuth credentials or service account
     - google-ads Python library: pip install google-ads
-    - Config: ~/.config/claude-seo/google-api.json with:
+    - Config: <SEO_CONFIG_DIR>/google-api.json with:
       {
         "ads_developer_token": "YOUR_DEV_TOKEN",
         "ads_customer_id": "123-456-7890",
@@ -40,9 +40,11 @@ except ImportError:
 
 try:
     from google_auth import load_config
+    import seo_paths
 except ImportError:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from google_auth import load_config
+    import seo_paths
 
 
 def _build_ads_client() -> Optional[object]:
@@ -63,7 +65,7 @@ def _build_ads_client() -> Optional[object]:
     if not dev_token:
         print(
             "Error: No Google Ads developer token configured. "
-            "Add 'ads_developer_token' to ~/.config/claude-seo/google-api.json. "
+            f"Add 'ads_developer_token' to {seo_paths.config_file('google-api.json')}. "
             "Get a token at: https://ads.google.com/aw/apicenter",
             file=sys.stderr,
         )
@@ -87,7 +89,7 @@ def _build_ads_client() -> Optional[object]:
             ads_config["login_customer_id"] = login_customer_id
 
         # Try to use OAuth token if available
-        token_path = os.path.expanduser("~/.config/claude-seo/oauth-token.json")
+        token_path = str(seo_paths.config_file("oauth-token.json"))
         if os.path.exists(token_path):
             with open(token_path) as f:
                 token_data = json.load(f)

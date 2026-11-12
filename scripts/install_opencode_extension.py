@@ -295,7 +295,9 @@ def build_extension(name: str, args: argparse.Namespace) -> tuple[Path, dict[str
             if field_source.is_file():
                 field_target = install_root / "dataforseo-field-config.json"
                 server["environment"]["FIELD_CONFIG_PATH"] = str(field_target)
-    elif args.url:
+    elif args.url and name != "matomo":
+        # Matomo is a REST API consumed by matomo_report.py, not an MCP
+        # server. Its --url is the analytics instance, not an MCP endpoint.
         server = {
             "type": "remote",
             "url": args.url,
@@ -321,8 +323,14 @@ def build_extension(name: str, args: argparse.Namespace) -> tuple[Path, dict[str
         shutil.copytree(scripts, install_root / "extensions" / name / "scripts", dirs_exist_ok=True)
 
     if name == "matomo":
+        # The extension installer runs outside the plugin. Point matomo_auth at
+        # the OpenCode credential location explicitly instead of mutating the
+        # process environment, which would leak into later work.
         import matomo_auth  # noqa: PLC0415
 
+        matomo_auth.CONFIG_PATH = str(
+            opencode_config_dir().with_name("opencode-seo") / "matomo.json"
+        )
         matomo_auth.save_config(
             {
                 "matomo_url": credentials.get("MATOMO_URL", ""),

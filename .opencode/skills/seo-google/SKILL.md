@@ -30,7 +30,7 @@ Before executing any command, check credentials:
 seo({"action": "run", "script": "google_auth.py", "args": ["--check", "--json"]})
 ```
 
-Config file: `~/.config/claude-seo/google-api.json`
+Config file: `~/.config/opencode-seo/google-api.json`
 ```json
 {
   "service_account_path": "/path/to/service_account.json",

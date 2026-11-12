@@ -13,7 +13,18 @@
 > **OpenAI Codex CLI**, **Cline**, **Aider**, and any other agent harness that
 > reads project-root agent instructions.
 
-## Cross-platform portability (v2.0.0)
+## OpenCode execution
+
+- Invoke `/seo` or `/seo/<command>`; the command loads the matching `seo-*` skill.
+- Run bundled Python through the `seo` tool, for example
+  `seo({"action": "run", "script": "page_checks.py", "args": ["--url", "<url>", "--json"]})`.
+  Do not call `./scripts/claude-seo` from an OpenCode session.
+- Store OpenCode credentials in `~/.config/opencode-seo/` and caches in
+  `~/.cache/opencode-seo/`. Legacy Claude files are read as a fallback.
+- Subagents always run in the background. The audit skills launch independent
+  specialists together and merge their reports as they arrive.
+
+## Cross-platform portability (v3.0.0)
 
 Every skill in `skills/*/SKILL.md` is authored to a portable subset of the
 Claude Code skill spec. Validate compatibility with your harness via:
@@ -60,9 +71,14 @@ in case a recipe needs a specific call.
 
 ## Overview
 
-Claude SEO is a Tier 4 SEO analysis skill with 26 sub-skills (22 core + 1 orchestrator +
+OpenCode SEO is a Tier 4 SEO analysis skill with 26 sub-skills (22 core + 1 orchestrator +
 1 framework integration + 2 extension mirrors), 19 sub-agents (16 core + 1 framework
-integration + 2 extension mirrors), and 67 Python execution scripts.
+integration + 2 extension mirrors), and 68 Python execution scripts.
+
+OpenCode reads the generated `.opencode/` layer. Use the `seo` tool for bundled
+Python scripts and `~/.config/opencode-seo/` for OpenCode credentials. Claude
+Code and the other harnesses keep the legacy `claude-seo` launcher and
+`~/.config/claude-seo/`.
 
 ## Quick Reference
 
@@ -173,7 +189,7 @@ skills/                    # 26 sub-skills (auto-discovered)
   seo-dataforseo/         # DataForSEO (extension)
   seo-image-gen/          # AI images (extension)
 agents/                    # 19 subagents
-scripts/                   # 67 Python scripts, including the managed runtime
+scripts/                   # 68 Python scripts, including the managed runtime
 schema/                    # JSON-LD templates
 extensions/                # 9 MCP extensions: DataForSEO, Firecrawl, Banana, Ahrefs, SE Ranking, Profound, Bing Webmaster, Matomo, Unlighthouse
 ```
@@ -183,7 +199,7 @@ extensions/                # 9 MCP extensions: DataForSEO, Firecrawl, Banana, Ah
 1. **Progressive Disclosure**: Read SKILL.md for routing, load references on demand
 2. **Industry Detection**: Auto-detect SaaS, e-commerce, local, publisher, agency
 3. **Security**: All scripts call `validate_url()` for SSRF protection
-4. **Config location**: `~/.config/claude-seo/` for API credentials
+4. **Config location**: `~/.config/opencode-seo/` for OpenCode; `~/.config/claude-seo/` remains for Claude Code
 
 ## Credits
 

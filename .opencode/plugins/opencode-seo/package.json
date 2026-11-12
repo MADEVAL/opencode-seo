@@ -1,0 +1,11 @@
+{
+  "name": "opencode-seo-plugin",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "OpenCode SEO local plugin: seo runtime tool and JSON-LD schema hook.",
+  "license": "MIT",
+  "exports": {
+    ".": "./index.ts"
+  }
+}

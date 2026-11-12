@@ -4,7 +4,7 @@
   26 sub-skills and 19 specialist agents. MIT licensed.
 -->
 
-<img src="assets/readme/v3/hero.svg" width="1200" height="420" alt="Claude SEO: rank in Google, get cited by AI. Three bots climb from #48 to #1 by fixing crawl, speed, schema, AI access and authority, then Google, ChatGPT, Perplexity, Gemini and Claude cite the site." />
+<img src="assets/readme/v3/hero.svg" width="1200" height="420" alt="OpenCode SEO: rank in Google, get cited by AI. Three bots climb from #48 to #1 by fixing crawl, speed, schema, AI access and authority, then Google, ChatGPT, Perplexity, Gemini and Claude cite the site." />
 
 <h1 align="center">OpenCode SEO</h1>
 
@@ -51,7 +51,7 @@ OpenCode SEO is built from 26 sub-skills and 19 specialist agents, and up to 17 
 
 ## OpenCode
 
-OpenCode is the primary target. It gets native skills, agents, slash commands, a local plugin, background subagents, and `mcp.servers` configuration.
+OpenCode is the primary target. It gets native skills, agents, slash commands, a local plugin, background subagents, and `mcp.servers` configuration. OpenCode agents inherit the session model; the model names in the agent table below describe the Claude Code presets only.
 
 Unix:
 
@@ -83,31 +83,34 @@ Extensions:
 
 Details: [docs/OPENCODE-INSTALL.md](docs/OPENCODE-INSTALL.md) and [docs/OPENCODE-MCP.md](docs/OPENCODE-MCP.md).
 
+The sections below keep the Claude Code and other harness installation paths.
+OpenCode users can stop after this section.
+
 ## See it in action
 
-Watch the tour in under four minutes. Coral, Violet and Red install Claude SEO, audit a real site and read the plan:
+Watch the tour in under four minutes. Coral, Violet and Red install OpenCode SEO, audit a real site and read the plan:
 
-<a href="https://www.youtube.com/watch?v=1VQvcKMcVsk"><img src="assets/readme/homies-tour.jpg" width="640" height="360" alt="Watch the Claude SEO video tour on YouTube: a full SEO team in your terminal, presented by Coral, Violet and Red" /></a>
+<a href="https://www.youtube.com/watch?v=1VQvcKMcVsk"><img src="assets/readme/homies-tour.jpg" width="640" height="360" alt="Watch the OpenCode SEO video tour on YouTube: a full SEO team in your terminal, presented by Coral, Violet and Red" /></a>
 
 Type `/seo` in Claude Code to see every command:
 
-![Claude SEO /seo command demo in the Claude Code terminal](screenshots/seo-command-demo.gif)
+![OpenCode SEO /seo command demo in the Claude Code terminal](screenshots/seo-command-demo.gif)
 
 Run a full audit and watch the agents fan out across the site:
 
-![Claude SEO /seo audit demo: parallel agents producing a prioritized action plan](screenshots/seo-audit-demo.gif)
+![OpenCode SEO /seo audit demo: parallel agents producing a prioritized action plan](screenshots/seo-audit-demo.gif)
 
 [Watch the full demo on YouTube](https://www.youtube.com/watch?v=COMnNlUakQk)
 
 ## Real results
 
-The project's own site, [claude-seo.md](https://claude-seo.md), audited with Claude SEO from day one: 10.8K Search Console clicks in its first 12 weeks and a 99 mobile PageSpeed score.
+The project's own site, [claude-seo.md](https://claude-seo.md), audited with OpenCode SEO from day one: 10.8K Search Console clicks in its first 12 weeks and a 99 mobile PageSpeed score.
 
 <img src="assets/readme/screen.svg" width="1200" height="751" alt="Real results: Google Search Console showing 10.8K clicks and 324K impressions for a new site between 23 March and 12 June 2026, next to a PageSpeed Insights report scoring 99 for performance and 100 for SEO." />
 
 ## Meet the team
 
-<img src="assets/readme/v3/team.svg" width="1200" height="420" alt="The Claude SEO team: 19 specialist agents on a website, each standing on the part it checks, shown one at a time with its role, model, ability and command." />
+<img src="assets/readme/v3/team.svg" width="1200" height="420" alt="The OpenCode SEO team: 19 specialist agents on a website, each standing on the part it checks, shown one at a time with its role, model, ability and command." />
 
 <details>
 <summary><b>All 19 agents</b></summary>
@@ -176,13 +179,13 @@ The project's own site, [claude-seo.md](https://claude-seo.md), audited with Cla
 
 ## Pricing
 
-<img src="assets/readme/v3/shop.svg" width="1200" height="420" alt="Same items, two shops: an agency charges for an SEO audit, reporting, calls and a retainer while Claude SEO charges nothing. Over year one the agency total reaches $106,500. Illustrative pricing." />
+<img src="assets/readme/v3/shop.svg" width="1200" height="420" alt="Same items, two shops: an agency charges for an SEO audit, reporting, calls and a retainer while OpenCode SEO charges nothing. Over year one the agency total reaches $106,500. Illustrative pricing." />
 
 <details>
 <summary><b>The full comparison</b></summary>
 <br />
 
-| | Doing it by hand | Hiring an agency | SEO audit software | **Claude SEO** |
+| | Doing it by hand | Hiring an agency | SEO audit software | **OpenCode SEO** |
 |---|---|---|---|---|
 | **Time per audit** | 4 to 8 hours | 1 to 3 weeks | 10 to 45 minutes | **10 to 15 minutes** |
 | **Cost** | Billable hours | $2k to $15k+ per project | $99 to $999 a month | **Free, with your Claude Code plan** |
@@ -198,7 +201,7 @@ The project's own site, [claude-seo.md](https://claude-seo.md), audited with Cla
 
 ## How an audit works
 
-1. **It learns your site.** Claude SEO detects the type of business (SaaS, local, e-commerce, publisher or agency) and adjusts its checks.
+1. **It learns your site.** OpenCode SEO detects the type of business (SaaS, local, e-commerce, publisher or agency) and adjusts its checks.
 2. **The team fans out.** Up to 17 specialist agents audit the site in parallel: technical, content, schema, speed, AI search and more.
 3. **You get a plan, not a pile of warnings.** Findings are scored and sorted into a prioritized action plan. Each recommendation says what it is based on, what it depends on and how you will know it worked.
 
@@ -230,7 +233,7 @@ Want the details? Read the [methodology](skills/seo/references/thinking-framewor
 
 ## Install
 
-<img src="assets/readme/v3/install.svg" width="1200" height="420" alt="Installing Claude SEO: add the marketplace, install the plugin, 26 skills and 19 agents arrive, /seo setup readies the browser, then /seo audit starts the first level." />
+<img src="assets/readme/v3/install.svg" width="1200" height="420" alt="Installing OpenCode SEO: add the marketplace, install the plugin, 26 skills and 19 agents arrive, /seo setup readies the browser, then /seo audit starts the first level." />
 
 You need [Claude Code](https://claude.com/product/claude-code) 1.0.33 or newer. Run these three commands inside it:
 
@@ -240,7 +243,7 @@ You need [Claude Code](https://claude.com/product/claude-code) 1.0.33 or newer. 
 /seo setup
 ```
 
-`/seo setup` prepares everything Claude SEO needs (its own Python environment and a headless browser) without touching the rest of your system. Run `/seo doctor` any time to check it.
+`/seo setup` prepares everything OpenCode SEO needs (its own Python environment and a headless browser) without touching the rest of your system. Run `/seo doctor` any time to check it.
 
 <details>
 <summary><b>Manual install: macOS and Linux</b></summary>
@@ -302,7 +305,7 @@ claude                                   # start Claude Code
 ## FAQ
 
 <details>
-<summary><b>What is Claude SEO?</b></summary>
+<summary><b>What is OpenCode SEO?</b></summary>
 <br />
 
 A free, open-source SEO audit tool that runs inside Claude Code. It checks technical SEO, Core Web Vitals, content quality, Schema.org structured data, AI search readiness, local SEO, e-commerce and international SEO, then gives you a prioritized action plan. It follows Google's own documentation, including the [AI Optimization Guide](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide).
@@ -321,7 +324,7 @@ Yes. It is MIT licensed, with no per-site pricing, no usage limits and no tracki
 <summary><b>Do I need API keys?</b></summary>
 <br />
 
-No. Claude SEO works out of the box. If you want real field data, you can connect free Google APIs (PageSpeed Insights, Chrome UX Report, Search Console and Google Analytics 4) with `/seo google setup`. Your keys stay on your machine.
+No. OpenCode SEO works out of the box. If you want real field data, you can connect free Google APIs (PageSpeed Insights, Chrome UX Report, Search Console and Google Analytics 4) with `/seo google setup`. Your keys stay on your machine.
 
 </details>
 
@@ -329,7 +332,7 @@ No. Claude SEO works out of the box. If you want real field data, you can connec
 <summary><b>How does it help with AI search like Google AI Overviews and ChatGPT?</b></summary>
 <br />
 
-Google says optimizing for AI search is still SEO, so Claude SEO starts with the basics that AI answers rely on: being indexed, fast and clear. Then `/seo geo` scores how easy your pages are to quote, checks that AI crawlers can reach them and looks at your brand's presence on Wikipedia, Reddit, YouTube and LinkedIn. `/seo agentic` checks how well AI agents can use your site.
+Google says optimizing for AI search is still SEO, so OpenCode SEO starts with the basics that AI answers rely on: being indexed, fast and clear. Then `/seo geo` scores how easy your pages are to quote, checks that AI crawlers can reach them and looks at your brand's presence on Wikipedia, Reddit, YouTube and LinkedIn. `/seo agentic` checks how well AI agents can use your site.
 
 </details>
 
@@ -337,7 +340,7 @@ Google says optimizing for AI search is still SEO, so Claude SEO starts with the
 <summary><b>Does it work on JavaScript sites like Next.js, React or Vue?</b></summary>
 <br />
 
-Yes. When a page needs JavaScript to show its content, Claude SEO opens it in a headless browser automatically, so single-page apps are audited as visitors see them.
+Yes. When a page needs JavaScript to show its content, OpenCode SEO opens it in a headless browser automatically, so single-page apps are audited as visitors see them.
 
 </details>
 
@@ -345,7 +348,7 @@ Yes. When a page needs JavaScript to show its content, Claude SEO opens it in a 
 <summary><b>How is it different from Screaming Frog or other SEO tools?</b></summary>
 <br />
 
-Crawlers like Screaming Frog crawl faster and deeper, and big SEO suites have their own backlink databases. Claude SEO does something else: it explains what it finds, sorts it by impact, covers AI search in depth and lets you ask follow-up questions in plain English. Many people use both.
+Crawlers like Screaming Frog crawl faster and deeper, and big SEO suites have their own backlink databases. OpenCode SEO does something else: it explains what it finds, sorts it by impact, covers AI search in depth and lets you ask follow-up questions in plain English. Many people use both.
 
 </details>
 
@@ -353,7 +356,7 @@ Crawlers like Screaming Frog crawl faster and deeper, and big SEO suites have th
 <summary><b>Does my data leave my computer?</b></summary>
 <br />
 
-Claude SEO runs inside Claude Code, so the pages and data it analyzes are sent to Claude, Anthropic's model, the same as anything else you work on in Claude Code. Reports are saved as files on your machine. No SEO service or other third party sees your data unless you connect an extension or API yourself. Besides the site you audit, some checks read public sources such as Wikipedia, Reddit and Common Crawl. See [PRIVACY.md](PRIVACY.md) for the full list.
+OpenCode SEO runs inside Claude Code, so the pages and data it analyzes are sent to Claude, Anthropic's model, the same as anything else you work on in Claude Code. Reports are saved as files on your machine. No SEO service or other third party sees your data unless you connect an extension or API yourself. Besides the site you audit, some checks read public sources such as Wikipedia, Reddit and Common Crawl. See [PRIVACY.md](PRIVACY.md) for the full list.
 
 </details>
 
@@ -378,7 +381,7 @@ bash claude-seo/uninstall.sh
 
 ## Extensions
 
-Optional add-ons that bring in more data. Claude SEO works fully without them.
+Optional add-ons that bring in more data. OpenCode SEO works fully without them.
 
 - **Banana:** AI images for SEO, from social previews to blog heroes ([Claude Banana](https://github.com/AgriciDaniel/banana-claude))
 - **SE Ranking:** your share of voice in ChatGPT, Gemini, Perplexity and Google AI answers
@@ -388,7 +391,7 @@ Optional add-ons that bring in more data. Claude SEO works fully without them.
 
 Setup guides live in [`extensions/`](extensions/).
 
-Integrations built and maintained by other people, in their own repositories, are listed in [Community integrations](docs/COMMUNITY-INTEGRATIONS.md). They are not part of Claude SEO and are not audited by it.
+Integrations built and maintained by other people, in their own repositories, are listed in [Community integrations](docs/COMMUNITY-INTEGRATIONS.md). They are not part of OpenCode SEO and are not audited by it.
 
 ## Star history
 
@@ -396,7 +399,7 @@ Integrations built and maintained by other people, in their own repositories, ar
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=AgriciDaniel/claude-seo&type=Date&theme=dark" />
     <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=AgriciDaniel/claude-seo&type=Date" />
-    <img alt="Claude SEO GitHub stars over time" src="https://api.star-history.com/svg?repos=AgriciDaniel/claude-seo&type=Date" width="720" />
+    <img alt="OpenCode SEO GitHub stars over time" src="https://api.star-history.com/svg?repos=AgriciDaniel/claude-seo&type=Date" width="720" />
   </picture>
 </a>
 

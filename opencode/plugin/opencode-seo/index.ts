@@ -2,6 +2,7 @@ import { Plugin } from "@opencode/plugin"
 import { spawn, spawnSync } from "node:child_process"
 import { existsSync } from "node:fs"
 import { readFile, realpath, stat } from "node:fs/promises"
+import { homedir } from "node:os"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -30,12 +31,13 @@ function isRuntimeRoot(directory: string): boolean {
   return existsSync(path.join(directory, "scripts", "runtime.py"))
 }
 
-function resolveRoot(): string {
+function resolveRoot(workspace: string): string {
   const pluginDir = currentPluginDir()
   const candidates = [
     process.env.OPENCODE_SEO_ROOT,
     path.resolve(pluginDir, "../../.."),
     path.resolve(pluginDir, "../../opencode-seo"),
+    workspace,
     process.cwd(),
   ].filter((value): value is string => Boolean(value))
 
@@ -43,14 +45,15 @@ function resolveRoot(): string {
     if (isRuntimeRoot(candidate)) return candidate
   }
 
-  return candidates[0] ?? process.cwd()
+  return workspace || candidates[0] || process.cwd()
 }
 
-function resolveAssetsRoot(runtimeRoot: string): string {
+function resolveAssetsRoot(runtimeRoot: string, workspace: string): string {
   const pluginDir = currentPluginDir()
   const candidates = [
     runtimeRoot,
     path.resolve(pluginDir, "../.."),
+    workspace,
     path.resolve(runtimeRoot, ".."),
   ]
 
@@ -97,7 +100,7 @@ function clip(value: string): string {
 function runProcess(
   python: PythonCommand,
   args: string[],
-  options: { cwd: string; timeout: number; signal?: AbortSignal },
+  options: { cwd: string; timeout: number; signal?: AbortSignal; env?: NodeJS.ProcessEnv },
 ): Promise<ProcessResult> {
   return new Promise((resolve) => {
     let settled = false
@@ -111,6 +114,7 @@ function runProcess(
       windowsHide: true,
       env: {
         ...process.env,
+        ...options.env,
         PYTHONUTF8: "1",
         PYTHONIOENCODING: "utf-8",
       },
@@ -208,9 +212,21 @@ function appendToolText(result: unknown, text: string): unknown {
 export default Plugin.define({
   id: "opencode-seo",
   async setup(ctx) {
-    const runtimeRoot = resolveRoot()
-    const assetsRoot = resolveAssetsRoot(runtimeRoot)
+    const workspace = ctx.location.directory
+    const runtimeRoot = resolveRoot(workspace)
+    const assetsRoot = resolveAssetsRoot(runtimeRoot, workspace)
     const runtime = path.join(runtimeRoot, "scripts", "runtime.py")
+    const seoEnv: NodeJS.ProcessEnv = {
+      OPENCODE_SEO_ROOT: runtimeRoot,
+      OPENCODE_SEO_CONFIG_DIR:
+        process.env.OPENCODE_SEO_CONFIG_DIR ??
+        process.env.CLAUDE_SEO_CONFIG_DIR ??
+        path.join(homedir(), ".config", "opencode-seo"),
+      OPENCODE_SEO_CACHE_DIR:
+        process.env.OPENCODE_SEO_CACHE_DIR ??
+        process.env.CLAUDE_SEO_CACHE_DIR ??
+        path.join(homedir(), ".cache", "opencode-seo"),
+    }
 
     await ctx.tool.transform((editor) => {
       editor.add({
@@ -261,23 +277,25 @@ export default Plugin.define({
             timeout?: number
           }
 
-          try {
-            const source =
-              context.messageID && context.id
-                ? { type: "tool" as const, messageID: context.messageID, id: context.id }
-                : undefined
-            await ctx.permission.assert({
-              sessionID: context.sessionID,
-              agent: context.agent,
-              ...(source ? { source } : {}),
-              action: "seo",
-              resources: [
-                request.action,
-                request.script ?? request.path ?? "",
-                request.extension ?? "",
-              ].filter(Boolean),
-            })
+          const source =
+            context.messageID && context.id
+              ? { type: "tool" as const, messageID: context.messageID, id: context.id }
+              : undefined
+          // Permission failures must propagate as Tool.Error so OpenCode can
+          // stop the call. Catch only the work that follows the check.
+          await ctx.permission.assert({
+            sessionID: context.sessionID,
+            agent: context.agent,
+            ...(source ? { source } : {}),
+            action: "seo",
+            resources: [
+              request.action,
+              request.script ?? request.path ?? "",
+              request.extension ?? "",
+            ].filter(Boolean),
+          })
 
+          try {
             if (request.action === "path") {
               return { content: runtimeRoot }
             }
@@ -318,9 +336,10 @@ export default Plugin.define({
             }
 
             const result = await runProcess(python, args, {
-              cwd: process.cwd(),
+              cwd: workspace,
               timeout,
               signal: context.signal,
+              env: seoEnv,
             })
 
             const output = [result.stdout.trim(), result.stderr.trim()].filter(Boolean).join("\n")
@@ -349,7 +368,8 @@ export default Plugin.define({
         const raw = event as unknown as { input?: Record<string, unknown> }
         const file = raw.input?.path ?? raw.input?.filePath
         if (typeof file !== "string" || !/\.(html?|json|md)$/i.test(file)) return
-        if (!existsSync(file)) return
+        const resolvedFile = path.isAbsolute(file) ? file : path.resolve(workspace, file)
+        if (!existsSync(resolvedFile)) return
 
         const python = findPython()
         if (!python) return
@@ -357,9 +377,10 @@ export default Plugin.define({
         const hookScript = path.join(runtimeRoot, "hooks", "validate-schema.py")
         if (!existsSync(hookScript)) return
 
-        const result = await runProcess(python, [hookScript, file], {
-          cwd: process.cwd(),
+        const result = await runProcess(python, [hookScript, resolvedFile], {
+          cwd: workspace,
           timeout: 30_000,
+          env: seoEnv,
         })
 
         const text = [result.stdout.trim(), result.code === 2 ? result.stderr.trim() : ""]

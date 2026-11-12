@@ -352,7 +352,7 @@ def main():
 
     if critical:
         # Exit 2: Claude Code feeds stderr back to Claude (stdout is ignored).
-        print("🛑 Schema validation ERRORS (flagged for Claude, fix before shipping):", file=sys.stderr)
+        print("🛑 Schema validation ERRORS (flagged for the agent, fix before shipping):", file=sys.stderr)
         for e in critical:
             print(f"  - {e}", file=sys.stderr)
         if warnings:

@@ -34,6 +34,7 @@ sys.path.insert(0, _SCRIPTS_DIR)
 try:
     from backlinks_auth import get_moz_api_key
     from google_auth import validate_url
+    import seo_paths
 except ImportError:
     print("Error: backlinks_auth.py and google_auth.py required in scripts/", file=sys.stderr)
     sys.exit(1)
@@ -44,7 +45,7 @@ MOZ_BASE = "https://api.moz.com"
 
 # Conservative default delay; verify current Moz plan limits.
 RATE_LIMIT_DELAY = 10
-RATE_LIMIT_FILE = os.path.expanduser("~/.cache/claude-seo/moz_last_request.lock")
+RATE_LIMIT_FILE = str(seo_paths.cache_file("moz_last_request.lock"))
 
 
 def _moz_basic_auth_header(api_key: str) -> str | None:

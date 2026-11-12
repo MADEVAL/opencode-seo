@@ -82,6 +82,25 @@ def test_banana_transforms_extension_runner_and_references(tmp_path, monkeypatch
     assert "nanobanana-mcp" in config["mcp"]["servers"]
 
 
+def test_matomo_writes_to_the_opencode_config_location(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("OPENCODE_CONFIG_DIR", str(tmp_path / "opencode"))
+    monkeypatch.delenv("OPENCODE_SEO_CONFIG_DIR", raising=False)
+    monkeypatch.delenv("CLAUDE_SEO_CONFIG_DIR", raising=False)
+    installer.build_extension(
+        "matomo",
+        args_for("matomo", url="https://analytics.example.com", site_id="1"),
+    )
+
+    saved = tmp_path / "opencode-seo" / "matomo.json"
+    assert saved.is_file()
+    payload = json.loads(saved.read_text(encoding="utf-8"))
+    assert payload["matomo_url"] == "https://analytics.example.com"
+    assert payload["matomo_token"] == "test-key"
+    assert not (tmp_path / "opencode" / "opencode.json").exists(), (
+        "Matomo is a REST API and must not be registered as an MCP server"
+    )
+
+
 def test_jsonc_config_is_merged_without_losing_keys(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("OPENCODE_CONFIG_DIR", str(tmp_path))
     config_path = tmp_path / "opencode.jsonc"

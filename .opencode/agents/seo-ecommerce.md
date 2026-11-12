@@ -81,7 +81,7 @@ seo({"action": "run", "script": "dataforseo_costs.py", "args": ["log", "<endpoin
 
 ## Output Format
 
-Match existing claude-seo patterns:
+Match existing output patterns:
 - Tables for comparative data (pricing, seller landscape)
 - Scores as XX/100 (schema, images, content, overall)
 - Priority: Critical > High > Medium > Low

@@ -41,6 +41,8 @@ from url_safety import (  # noqa: E402  (path bootstrap must run first)
     safe_requests_session,
 )
 
+import seo_paths  # noqa: E402  (path bootstrap must run first)
+
 try:
     # Reuse the shared legacy-permission remediation helper rather than
     # duplicating it. It is path/mode-generic, as backlinks_auth.py already
@@ -52,9 +54,9 @@ except ImportError as _import_exc:  # pragma: no cover - hard dependency
         "Install with: pip install -r requirements.txt"
     ) from _import_exc
 
-CONFIG_PATH = os.path.expanduser("~/.config/claude-seo/matomo.json")
+CONFIG_PATH = str(seo_paths.config_file("matomo.json"))
 DEFAULT_TIMEOUT = 15
-USER_AGENT = "ClaudeSEO/2.3.0"
+USER_AGENT = "OpenCodeSEO/3.0.0"
 LOCAL_TARGETS_ENV = "CLAUDE_SEO_LOCAL_TARGETS"
 
 _SECRET_RE = re.compile(r"(token_auth|token|password)=[^\s&\"']+", re.IGNORECASE)
@@ -87,14 +89,31 @@ def _restrict_to_current_user_windows(path: str) -> None:
         )
         return
     try:
+        identity = subprocess.run(
+            ["whoami"], check=False, capture_output=True, text=True, timeout=5
+        ).stdout.strip() or user
+        # Grant first. If the grant fails, removing inheritance would leave the
+        # file with no access control entry and make it unreadable by its owner.
+        grant = subprocess.run(
+            ["icacls", path, "/grant:r", f"{identity}:F"],
+            check=False, capture_output=True, text=True, timeout=10,
+        )
+        if grant.returncode != 0:
+            detail = (grant.stderr or grant.stdout or "").strip()
+            print(
+                f"Warning: icacls could not grant {identity} access to {path} "
+                f"(exit {grant.returncode}): {detail}",
+                file=sys.stderr,
+            )
+            return
         result = subprocess.run(
-            ["icacls", path, "/inheritance:r", "/grant:r", f"{user}:F"],
+            ["icacls", path, "/inheritance:r"],
             check=False, capture_output=True, text=True, timeout=10,
         )
         if result.returncode != 0:
             detail = (result.stderr or result.stdout or "").strip()
             print(
-                f"Warning: icacls could not restrict {path} to {user} "
+                f"Warning: icacls could not remove inheritance from {path} "
                 f"(exit {result.returncode}): {detail}",
                 file=sys.stderr,
             )
@@ -167,8 +186,9 @@ def load_config() -> dict:
     """
     Load configuration from config file with environment variable fallbacks.
 
-    Reads ~/.config/claude-seo/matomo.json first. Any missing fields
-    are filled from environment variables.
+    Reads the active SEO config file (OpenCode: ~/.config/opencode-seo,
+    Claude: ~/.config/claude-seo) first. Any missing fields are filled from
+    environment variables.
 
     Returns:
         Dictionary with keys: matomo_url, matomo_token, matomo_site_id.

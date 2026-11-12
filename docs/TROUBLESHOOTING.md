@@ -94,7 +94,7 @@ curl -fsSL https://raw.githubusercontent.com/AgriciDaniel/claude-seo/main/requir
 
 1. Install Python from [python.org](https://python.org) and check "Add to PATH"
 2. Rerun `install.ps1`. It uses `CLAUDE_SEO_PYTHON` when set, otherwise the first of `py -3`, `python3` and `python` that is Python 3.11 to 3.14, otherwise the newest of `py -3.14` down to `py -3.11`
-3. If `py -3` is a newer Python that Claude SEO does not support yet (such as 3.15), install 3.14 alongside it, or set `CLAUDE_SEO_PYTHON` to a supported `python.exe`
+3. If `py -3` is a newer Python that OpenCode SEO does not support yet (such as 3.15), install 3.14 alongside it, or set `CLAUDE_SEO_PYTHON` to a supported `python.exe`
 4. Run `/seo doctor` after installation
 
 ---

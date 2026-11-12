@@ -180,12 +180,16 @@ def replace_runtime_calls(text: str) -> str:
     text = re.sub(LAUNCHER + r"\s+doctor(?:\s+--json)?\b", 'seo({"action": "doctor"})', text)
     text = re.sub(QUOTED_LAUNCHER, "seo run", text)
     text = re.sub(LAUNCHER, "seo run", text)
+    text = text.replace("`seo run run`", "`seo` tool run")
+    text = text.replace("`seo` tool run command reports", "run of the `seo` tool reports")
     return text
 
 
 def transform_body(text: str, current_skill: str | None, is_agent: bool = False) -> str:
     text = replace_runtime_calls(text)
     text = replace_references(text, current_skill, is_agent)
+    text = text.replace("~/.config/claude-seo", "~/.config/opencode-seo")
+    text = text.replace("~/.cache/claude-seo", "~/.cache/opencode-seo")
     text = text.replace("~/.claude/skills", "~/.config/opencode/skills")
     text = text.replace("~/.claude/agents", "~/.config/opencode/agents")
     text = text.replace("~/.claude.json", "~/.config/opencode/opencode.json")
@@ -195,8 +199,16 @@ def transform_body(text: str, current_skill: str | None, is_agent: bool = False)
     text = text.replace("./scripts/claude-seo", "./scripts/opencode-seo")
     text = text.replace("Claude Code expands", "OpenCode resolves")
     text = text.replace("Claude Code", "OpenCode")
+    # The vendor matrix names Anthropic's product, not this harness. Restore
+    # the factual mention after the harness-wide replacement above.
+    text = text.replace(
+        "Claude in Chrome (OpenCode, Cowork, Desktop)",
+        "Claude in Chrome (Claude Code, Cowork, Desktop)",
+    )
     text = text.replace("Claude SEO", "OpenCode SEO")
     text = text.replace("claude-seo uses", "OpenCode SEO uses")
+    text = text.replace("Match existing claude-seo patterns:", "Match existing output patterns:")
+    text = text.replace("Format output to match claude-seo conventions", "Format output to match the project's conventions")
     text = text.replace("CLAUDE.md", "AGENTS.md")
     text = text.replace(
         "schema/templates.json",

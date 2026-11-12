@@ -48,6 +48,36 @@ commands, permissions, MCP configuration, and a local plugin.
 - Version bumped to 3.0.0 across manifests, skill metadata, installers, and
   generated OpenCode files.
 
+### Fixed
+
+- **Permission failures now propagate.** The `seo` tool no longer turns a
+  `Tool.Error` from `ctx.permission.assert` into ordinary tool output, so a
+  denied call stops instead of inviting a retry.
+- **Workspace-aware runtime.** The plugin uses `ctx.location.directory` for
+  install-root discovery, Python `cwd`, and relative paths in the schema hook.
+  Worktrees, moved sessions, and multi-location servers no longer write audit
+  artifacts to the server's launch directory.
+- **OpenCode credential and cache paths.** `seo_paths.py` resolves
+  `~/.config/opencode-seo` and `~/.cache/opencode-seo` for OpenCode, with
+  per-file fallback to `~/.config/claude-seo` and `~/.cache/claude-seo` for
+  existing installs. Google, Matomo, Moz, Bing, Common Crawl, drift, and
+  DataForSEO costs use it.
+- **Generator fidelity.** The generated target no longer contains
+  `seo run run`, no longer rewrites Anthropic's product name in the agent
+  vendor matrix, and rewrites legacy credential paths to the OpenCode paths.
+- **Reference integrity.** `seo-agentic` now points at the existing
+  `seo-geo/references/llmstxt-evidence.md`.
+- **Extension command guards.** Ahrefs, Firecrawl, Matomo, Profound, SE Ranking,
+  Bing, and Unlighthouse commands tell the user which extension to install
+  instead of loading a missing skill.
+- **Matomo is not MCP.** The extension installer no longer registers a remote
+  `mcp.servers.matomo` entry from the Matomo URL.
+- **Windows ACL hardening.** Credential files receive the current user's
+  explicit grant before inheritance is removed, so a failed `icacls` lookup
+  cannot leave the file unreadable.
+- **No duplicate instructions.** `opencode.json` relies on automatic
+  `AGENTS.md` discovery instead of listing the same file in `instructions`.
+
 ### Compatibility
 
 - Claude Code continues to use `CLAUDE.md`, `skills/`, `agents/`, `hooks/`, and

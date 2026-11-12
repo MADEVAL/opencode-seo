@@ -78,7 +78,7 @@ a report (`status: FAIL`) that carries a number in either case. See the
 - **No auth needed:** Public data, free to download
 - **Data:** Domain-level in-degree, PageRank, harmonic centrality, referring domains
 - **Command:** `seo({"action": "run", "script": "commoncrawl_graph.py"})`
-- **Cache:** `~/.cache/claude-seo/commoncrawl/` (90-day TTL)
+- **Cache:** `~/.cache/opencode-seo/commoncrawl/` (90-day TTL)
 - **Blind spots:** No anchor text, no page-level data, freshness limited to the release's crawl months,
   domain-level only (e.g., "nytimes.com links to example.com" but not which page)
 

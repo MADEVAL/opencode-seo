@@ -7,7 +7,7 @@ checked 2026-09-23. None of these files affects Google Search ranking.
 
 Community spec (llmstxt.org). Lighthouse counts it in the Agentic Browsing
 fraction; Google Search ignores it (see `seo-geo`,
-`references/llmstxt-evidence.md`, for the citation evidence).
+`../seo-geo/references/llmstxt-evidence.md`, for the citation evidence).
 
 Structure, in order: optional BOM; an **H1 with the site or project name**
 (the only required part); an optional `>` blockquote summary; optional prose;

@@ -90,7 +90,7 @@ claude-seo/
     seo-flow.md                  # FLOW framework integration
   hooks/                           # Quality gate hooks
     hooks.json                   # PostToolUse schema validation
-  scripts/                         # 67 Python execution scripts
+  scripts/                         # 68 Python execution scripts
     google_auth.py               # Credential management (OAuth, SA, API key, 4-tier detection)
     google_properties.py         # Picks the GSC/GA4 property for the audited domain, fails closed on a mismatch
     backlinks_auth.py            # Backlink API credential management (Moz, Bing)
@@ -122,6 +122,7 @@ claude-seo/
     drift_report.py              # SEO drift HTML report generator
     drift_history.py             # SEO drift history query
     dataforseo_costs.py          # DataForSEO cost estimation and budget tracking
+    seo_paths.py                 # OpenCode/Claude config and cache path resolution
     dataforseo_merchant.py       # Google Shopping / Amazon data fetching
     dataforseo_normalize.py      # DataForSEO response normalization utility
     sync_flow.py                 # FLOW prompt library sync (GitHub API, CC BY 4.0 headers, --dry-run, --ref)

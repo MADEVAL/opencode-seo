@@ -49,8 +49,10 @@ except ImportError as _import_exc:
         "Install with: pip install -r requirements.txt"
     ) from _import_exc
 
-CONFIG_PATH = os.path.expanduser("~/.config/claude-seo/backlinks-api.json")
-CACHE_DIR = os.path.expanduser("~/.cache/claude-seo/commoncrawl")
+import seo_paths  # noqa: E402  (path bootstrap must run first)
+
+CONFIG_PATH = str(seo_paths.config_file("backlinks-api.json"))
+CACHE_DIR = str(seo_paths.cache_file("commoncrawl"))
 
 # Which services need which auth type
 SERVICE_AUTH = {
@@ -92,8 +94,28 @@ def _restrict_to_current_user_windows(path: str) -> None:
         )
         return
     try:
+        identity = subprocess.run(
+            ["whoami"], check=False, capture_output=True, text=True, timeout=5
+        ).stdout.strip() or user
+        # Grant first. If the grant fails, removing inheritance would leave the
+        # file with no access control entry and make it unreadable by its owner.
+        grant = subprocess.run(
+            ["icacls", path, "/grant:r", f"{identity}:F"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if grant.returncode != 0:
+            detail = (grant.stderr or grant.stdout or "").strip()
+            print(
+                f"Warning: icacls could not grant {identity} access to {path} "
+                f"(exit {grant.returncode}): {detail}",
+                file=sys.stderr,
+            )
+            return
         result = subprocess.run(
-            ["icacls", path, "/inheritance:r", "/grant:r", f"{user}:F"],
+            ["icacls", path, "/inheritance:r"],
             check=False,
             capture_output=True,
             text=True,
@@ -102,7 +124,7 @@ def _restrict_to_current_user_windows(path: str) -> None:
         if result.returncode != 0:
             detail = (result.stderr or result.stdout or "").strip()
             print(
-                f"Warning: icacls could not restrict {path} to {user} "
+                f"Warning: icacls could not remove inheritance from {path} "
                 f"(exit {result.returncode}): {detail}",
                 file=sys.stderr,
             )
@@ -154,8 +176,9 @@ def load_config() -> dict:
     """
     Load configuration from config file with environment variable fallbacks.
 
-    Reads ~/.config/claude-seo/backlinks-api.json first. Any missing fields
-    are filled from environment variables.
+    Reads the active SEO config file (OpenCode: ~/.config/opencode-seo,
+    Claude: ~/.config/claude-seo) first. Any missing fields are filled from
+    environment variables.
 
     Returns:
         Dictionary with keys: moz_api_key, bing_api_key,

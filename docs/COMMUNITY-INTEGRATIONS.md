@@ -1,13 +1,13 @@
 # Community integrations
 
 Integrations built and maintained by other people, in their own repositories.
-They are listed here so you can find them. They are **not** part of Claude SEO:
+They are listed here so you can find them. They are **not** part of OpenCode SEO:
 the maintainer has not audited their code, does not ship or update them, and
 cannot support them. Read an integration's code and install script before you
 run it, the same as for any third-party tool, and send questions and bug
 reports to its own repository.
 
-Claude SEO does not bundle third-party paid services as first-party
+OpenCode SEO does not bundle third-party paid services as first-party
 extensions. A separate repository listed here is the way to offer one.
 
 ## Listed
@@ -27,7 +27,7 @@ Open an issue with a link to the repository. An integration is listed when it:
 4. Carries no tracking or affiliate links (no UTM parameters, no referral
    codes) in skill files, scripts or docs.
 5. Installs only into the user's own directories, has an uninstall script, and
-   does not change Claude SEO's files or dependencies.
+   does not change OpenCode SEO's files or dependencies.
 6. Keeps credentials out of the repository and out of command output.
 7. Treats fetched page content as untrusted data in its skill instructions.
 

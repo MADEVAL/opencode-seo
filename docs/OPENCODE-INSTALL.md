@@ -53,6 +53,11 @@ OPENCODE_CONFIG_DIR=/opt/opencode ./install-opencode.sh --no-setup
 @seo
 ```
 
+OpenCode credentials live in `~/.config/opencode-seo/` and caches in
+`~/.cache/opencode-seo/`. The first run reads a matching file from
+`~/.config/claude-seo/` if the OpenCode copy is missing, so upgrading does not
+lose Google, Matomo, Moz, Bing, or Common Crawl credentials.
+
 The `seo` tool is available to agents as:
 
 ```json

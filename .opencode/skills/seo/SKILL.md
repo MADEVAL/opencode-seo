@@ -64,7 +64,7 @@ status separately, and do not fall back to global or user package installation.
 For diagnosis, execute
 `seo({"action": "doctor"})`; its output
 intentionally omits absolute paths and environment values. If any
-`seo run run` command reports that setup is
+run of the `seo` tool reports that setup is
 required, suggest `/seo setup` and do not improvise a `pip install`.
 
 ## Orchestration Logic

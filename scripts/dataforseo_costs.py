@@ -8,9 +8,10 @@ Provides cost-aware guardrails for DataForSEO API usage:
 - Session and daily budget tracking
 - Spending history and summaries
 
-Config: ~/.config/claude-seo/dataforseo-costs.json
-Ledger: ~/.config/claude-seo/dataforseo-ledger.json
-Set CLAUDE_SEO_CONFIG_DIR to point both somewhere else (used by the tests).
+Config: <SEO_CONFIG_DIR>/dataforseo-costs.json
+Ledger: <SEO_CONFIG_DIR>/dataforseo-ledger.json
+OpenCode uses ~/.config/opencode-seo; Claude uses ~/.config/claude-seo.
+Set OPENCODE_SEO_CONFIG_DIR or CLAUDE_SEO_CONFIG_DIR to override both.
 
 Usage:
     python dataforseo_costs.py estimate <endpoint> [--count N]
@@ -34,6 +35,12 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
 
+_SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+
+import seo_paths  # noqa: E402
+
 try:
     import fcntl
 except ImportError:
@@ -47,11 +54,7 @@ except ImportError:
 # ----- paths -----
 # CLAUDE_SEO_CONFIG_DIR lets tests (and anyone running an isolated budget) point
 # the ledger somewhere other than the real one. Resolved at import.
-CONFIG_DIR = Path(
-    os.environ.get("OPENCODE_SEO_CONFIG_DIR")
-    or os.environ.get("CLAUDE_SEO_CONFIG_DIR")
-    or Path.home() / ".config" / "claude-seo"
-)
+CONFIG_DIR = seo_paths.config_file("dataforseo-costs.json").parent
 CONFIG_FILE = CONFIG_DIR / "dataforseo-costs.json"
 LEDGER_FILE = CONFIG_DIR / "dataforseo-ledger.json"
 LOCK_FILE = CONFIG_DIR / "dataforseo-ledger.lock"

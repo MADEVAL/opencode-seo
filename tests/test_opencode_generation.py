@@ -48,7 +48,14 @@ def test_skill_and_agent_counts_match_canonical_sources() -> None:
 
 
 def test_generated_markdown_has_no_claude_tokens() -> None:
-    forbidden = ("${CLAUDE_PLUGIN_ROOT}", "mcp__", "maxTurns")
+    forbidden = (
+        "${CLAUDE_PLUGIN_ROOT}",
+        "mcp__",
+        "maxTurns",
+        "seo run run",
+        "~/.config/claude-seo",
+        "~/.cache/claude-seo",
+    )
     hits: list[str] = []
     for path in sorted((OPENCODE / "skills").rglob("*.md")) + sorted((OPENCODE / "agents").glob("*.md")):
         text = path.read_text(encoding="utf-8")
@@ -56,6 +63,39 @@ def test_generated_markdown_has_no_claude_tokens() -> None:
             if token in text:
                 hits.append(f"{path.relative_to(ROOT).as_posix()}: {token}")
     assert not hits, "\n".join(hits)
+
+
+def test_vendor_matrix_keeps_the_anthropic_product_name() -> None:
+    text = (
+        OPENCODE / "skills" / "seo-agentic" / "references" / "vendor-matrix.md"
+    ).read_text(encoding="utf-8")
+    assert "Claude in Chrome (Claude Code, Cowork, Desktop)" in text
+    assert "Claude in Chrome (OpenCode, Cowork, Desktop)" not in text
+
+
+def test_cross_skill_reference_exists() -> None:
+    text = (
+        OPENCODE / "skills" / "seo-agentic" / "references" / "discovery-and-markdown.md"
+    ).read_text(encoding="utf-8")
+    assert "../seo-geo/references/llmstxt-evidence.md" in text
+    assert (
+        OPENCODE / "skills" / "seo-geo" / "references" / "llmstxt-evidence.md"
+    ).is_file()
+
+
+def test_extension_commands_guard_missing_skills() -> None:
+    for name, extension in (
+        ("ahrefs", "ahrefs"),
+        ("firecrawl", "firecrawl"),
+        ("matomo", "matomo"),
+        ("profound", "profound"),
+        ("seranking", "seranking"),
+        ("bing", "bing-webmaster"),
+        ("unlighthouse", "unlighthouse"),
+    ):
+        text = (OPENCODE / "commands" / "seo" / f"{name}.md").read_text(encoding="utf-8")
+        assert "install-opencode" in text, name
+        assert extension in text, name
 
 
 def test_generated_skills_do_not_declare_claude_only_frontmatter() -> None:
@@ -98,9 +138,21 @@ def test_commands_exist() -> None:
 
 def test_plugin_and_root_config_exist() -> None:
     assert (OPENCODE / "plugins" / "opencode-seo" / "index.ts").is_file()
+    assert (OPENCODE / "plugins" / "opencode-seo" / "package.json").is_file()
     config = json.loads((ROOT / "opencode.json").read_text(encoding="utf-8"))
     assert "skills" not in config, "explicit skills source would override .opencode/skills"
+    assert "instructions" not in config, "AGENTS.md is discovered automatically"
     assert config["experimental"]["subagent_depth"] == 1
+
+
+def test_package_manifest_exposes_the_plugin() -> None:
+    root = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+    plugin = json.loads(
+        (ROOT / "opencode" / "plugin" / "opencode-seo" / "package.json").read_text(encoding="utf-8")
+    )
+    assert plugin["type"] == "module"
+    assert plugin["exports"]["."] == "./index.ts"
+    assert plugin["version"] == root["version"]
 
 
 def test_plugin_exposes_runtime_bridge_and_schema_hook() -> None:
@@ -108,6 +160,8 @@ def test_plugin_exposes_runtime_bridge_and_schema_hook() -> None:
     assert "ctx.tool.transform" in plugin
     assert "ctx.tool.hook(\"execute.after\"" in plugin
     assert "ctx.permission.assert" in plugin
+    assert "ctx.location.directory" in plugin
+    assert "cwd: workspace" in plugin
     assert "runtime.py" in plugin
     for action in ("run", "setup", "doctor", "path", "read"):
         assert f'"{action}"' in plugin

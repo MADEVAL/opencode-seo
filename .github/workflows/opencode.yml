@@ -72,6 +72,7 @@ jobs:
             scripts/build_opencode.py \
             scripts/install_opencode_extension.py \
             scripts/install_opencode_package.py \
+            scripts/seo_paths.py \
             scripts/sync_opencode_layout.py \
             scripts/runtime.py
 
@@ -80,7 +81,7 @@ jobs:
 
       - name: Reject Claude-only tokens in the OpenCode target
         run: |
-          if grep -RInE '\$\{CLAUDE_PLUGIN_ROOT\}|mcp__|maxTurns' .opencode/skills .opencode/agents; then
+          if grep -RInE '\$\{CLAUDE_PLUGIN_ROOT\}|mcp__|maxTurns|seo run run|~/\.config/claude-seo|~/\.cache/claude-seo' .opencode/skills .opencode/agents; then
             echo "::error::Claude-only tokens found in the generated OpenCode target"
             exit 1
           fi
@@ -93,4 +94,5 @@ jobs:
             tests/test_opencode_extension_install.py \
             tests/test_opencode_package_install.py \
             tests/test_opencode_env_aliases.py \
+            tests/test_seo_paths.py \
             tests/test_no_em_dash.py

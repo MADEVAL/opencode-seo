@@ -16,6 +16,7 @@ def test_install_package_copies_generated_target(tmp_path) -> None:
     assert counts == {"skills": 26, "agents": 19, "commands": 35, "plugins": 1}
 
     assert (tmp_path / "plugins" / "opencode-seo" / "index.ts").is_file()
+    assert (tmp_path / "plugins" / "opencode-seo" / "package.json").is_file()
     assert (tmp_path / "opencode-seo" / ".opencode-seo-root").is_file()
     assert (tmp_path / "opencode-seo" / "scripts" / "runtime.py").is_file()
     assert (tmp_path / "commands" / "seo.md").is_file()

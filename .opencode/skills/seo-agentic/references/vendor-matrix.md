@@ -13,7 +13,7 @@ Refresh before quoting any row older than 60 days (see "Refresh procedure").
 | OpenAI: cloud browser (ChatGPT Work), Codex | as above | not documented | Web Bot Auth | S |
 | Google: Gemini in Chrome, Chrome auto browse | page elements and screen positions | no public evidence of consumption; Google co-edits the spec | Google-Agent (user-triggered, generally ignores robots.txt); experimenting with Web Bot Auth as `https://agent.bot.goog` | P (identity), S (reading) |
 | Microsoft: Edge, Copilot Mode | not documented | Edge supports WebMCP for testing; no evidence Copilot consumes tools | not researched | P (Edge), S (Copilot) |
-| Anthropic: Claude in Chrome (OpenCode, Cowork, Desktop), computer use | page text, DOM, console and network, screenshots | none (public issue reports discovery missing) | ClaudeBot, Claude-SearchBot, Claude-User; all honour robots.txt; IPs at claude.com/crawling/bots.json | P (bots), S (reading) |
+| Anthropic: Claude in Chrome (Claude Code, Cowork, Desktop), computer use | page text, DOM, console and network, screenshots | none (public issue reports discovery missing) | ClaudeBot, Claude-SearchBot, Claude-User; all honour robots.txt; IPs at claude.com/crawling/bots.json | P (bots), S (reading) |
 | Perplexity: Comet | accessibility tree and screenshots | no public signal | PerplexityBot honours robots.txt; Perplexity-User generally does not | P (bots), S (reading) |
 | Brave: Leo | not documented | experimental, Nightly behind `brave://flags/#enable-webmcp-testing` | not verified | S |
 | Opera Neon, Dia, Sigma, Fellou | not documented | no public signal | not verified | S |

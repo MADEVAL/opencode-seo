@@ -58,7 +58,7 @@ For each audited page, evaluate:
 
 ## Output Format
 
-Match existing claude-seo patterns:
+Match existing output patterns:
 
 ### Image Audit Summary
 

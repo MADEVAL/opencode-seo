@@ -1,6 +1,8 @@
 # OpenCode SEO: план полной поддержки OpenCode V2 с сохранением других harness
 
-Статус: выполняется. Фазы 0-9 завершены, остается релизная проверка.
+Статус: завершено и проверено на OpenCode 2.2.7 (2026-11-12). Фазы 0-10
+закрыты, полный `pytest` зеленый, OpenCode видит 26 skills, 19 агентов,
+35 команд и локальный plugin.
 Цель: сделать OpenCode главным и лучшим образом поддерживаемым harness, не удаляя
 поддержку Claude Code, Cursor, Codex, Cline, Aider, Antigravity и других клиентов,
 которые читают `AGENTS.md` или `SKILL.md`.
@@ -40,7 +42,10 @@
   и сгенерированном OpenCode-слое;
 - добавлен `CHANGELOG` для `3.0.0` и легкий OpenCode CI.
 
-Следующая фаза: финальная релизная проверка и тег `v3.0.0`.
+Финальная проверка выполнена: `python scripts/build_opencode.py --check`,
+`pytest tests -q` (2368 passed, 33 skipped), `opencode plugin list`,
+`opencode debug agents`, `opencode debug config`, установка в чистый каталог
+и dry-run расширений. Остался только тег `v3.0.0`.
 
 ---
 
@@ -136,12 +141,12 @@
 | Возможность OpenCode | Как используется в OpenCode SEO |
 |---|---|
 | Skills discovery и precedence | `.opencode/skills`, глобально `~/.config/opencode/skills`, отдельный source в `opencode.json` |
-| `metadata.opencode/autoinvoke` | Скрыть служебные skills, оставить основные видимыми |
+| `metadata.opencode/autoinvoke` | Не используется: все 26 skills должны быть видимы. Поле поддерживается, но не требуется |
 | Agents `mode: subagent` | Все 19 специалистов |
 | Agents `steps` | Замена `maxTurns` |
 | Agents `permissions` | Точная копия исходных `tools` |
-| Commands `$ARGUMENTS`, `$1`, `$2` | `/seo`, `/seo/audit`, `/seo/drift` |
-| Commands `agent`, `model`, `subagent` | Опциональные переопределения |
+| Commands `$ARGUMENTS`, `$1`, `$2` | `/seo`, `/seo/audit`, `/seo/drift`; `$ARGUMENTS` используется везде |
+| Commands `agent`, `model`, `subagent` | Не используются: команда наследует агента и модель сессии |
 | Plugins `ctx.tool.transform` | Инструмент `seo` для Python-рантайма |
 | Plugins `ctx.tool.hook` | Валидация JSON-LD после edit/write |
 | Plugins `ctx.permission.assert` | Разрешение на запуск скрипта |
@@ -149,12 +154,12 @@
 | MCP `codemode: false` | Прямые имена `dataforseo_*` |
 | MCP `timeout` | Долгие SEO-запросы |
 | Permissions | Allowlist, `.env` ask, запрет рекурсивных субагентов |
-| Policies | Опциональный hard-deny для enterprise |
-| `AGENTS.md` | Главные инструкции проекта и установленного пакета |
-| `instructions` config | Дополнительные документы, если нужны |
-| `references` config | Опционально, общая библиотека SEO-справок |
+| Policies | Не используются: политики остаются опциональными для enterprise |
+| `AGENTS.md` | Главные инструкции проекта и установленного пакета; `instructions` не дублирует его |
+| `instructions` config | Не используется: `AGENTS.md` находится автоматически. Значение можно добавить для внешних правил |
+| `references` config | Не используется: справки лежат внутри skills и читаются по относительным путям |
 | Config `{env:...}` | Ключи MCP и провайдеров без записи секретов |
-| Code Mode `execute` | Альтернативный путь для MCP и пакетных вызовов |
+| Code Mode `execute` | Не используется: SEO MCP-серверы работают с `codemode: false`, а `seo` tool доступен напрямую |
 | `experimental.subagent_depth` | Ограничение вложенности |
 | `opencode debug agents/config/paths` | Диагностика и тесты |
 | `opencode mcp list`, `opencode plugin list` | Проверка установки |

@@ -57,6 +57,12 @@ def test_legacy_data_dir_still_works(monkeypatch, tmp_path) -> None:
     assert data_dir == (tmp_path / "old-data").resolve()
 
 
+def test_opencode_root_uses_opencode_product_name(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("OPENCODE_SEO_ROOT", str(tmp_path))
+    assert runtime._product() == "OpenCode SEO"
+    assert runtime._python_env_name() == "OPENCODE_SEO_PYTHON"
+
+
 def test_opencode_root_marker_selects_plugin_mode(monkeypatch, tmp_path) -> None:
     root = tmp_path / "root"
     root.mkdir()

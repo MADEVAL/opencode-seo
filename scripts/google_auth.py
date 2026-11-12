@@ -27,8 +27,14 @@ import sys
 import time
 from typing import Optional
 
-CONFIG_PATH = os.path.expanduser("~/.config/claude-seo/google-api.json")
-TOKEN_PATH = os.path.expanduser("~/.config/claude-seo/oauth-token.json")
+_SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+if _SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPTS_DIR)
+
+import seo_paths  # noqa: E402  (path bootstrap must run first)
+
+CONFIG_PATH = str(seo_paths.config_file("google-api.json"))
+TOKEN_PATH = str(seo_paths.config_file("oauth-token.json"))
 
 # Service-to-scope mapping
 SCOPES = {
@@ -104,8 +110,9 @@ def load_config() -> dict:
     """
     Load configuration from config file with environment variable fallbacks.
 
-    Reads ~/.config/claude-seo/google-api.json first. Any missing fields
-    are filled from environment variables.
+    Reads the active SEO config file (OpenCode: ~/.config/opencode-seo,
+    Claude: ~/.config/claude-seo) first. Any missing fields are filled from
+    environment variables.
 
     Returns:
         Dictionary with keys: service_account_path, api_key,
@@ -1013,8 +1020,8 @@ FASTEST, FOR PROPERTIES YOU OWN: use your own Google account
      Paste email, set Viewer role
 
 6. CREATE CONFIG FILE
-   mkdir -p ~/.config/claude-seo
-   Save to ~/.config/claude-seo/google-api.json:
+   mkdir -p <SEO_CONFIG_DIR>
+   Save to <SEO_CONFIG_DIR>/google-api.json:
 
    {
      "service_account_path": "/path/to/service_account.json",

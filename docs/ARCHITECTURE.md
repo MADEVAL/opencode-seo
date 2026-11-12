@@ -2,7 +2,7 @@
 
 ## Overview
 
-Claude SEO follows Anthropic's official Claude Code skill specification with a modular, multi-skill architecture.
+OpenCode SEO follows Anthropic's official Claude Code skill specification with a modular, multi-skill architecture.
 
 ## Directory Structure
 

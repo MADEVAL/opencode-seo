@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">OpenCode SEO: native SEO audits for OpenCode</title>
+  <desc id="desc">A dark terminal banner showing the /seo audit command, parallel SEO specialist agents, and the OpenCode SEO fork name.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#070b18"/>
+      <stop offset="0.55" stop-color="#0c1428"/>
+      <stop offset="1" stop-color="#101b35"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2dd4bf"/>
+      <stop offset="0.55" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#fbbf24"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#111c36"/>
+      <stop offset="1" stop-color="#0a1020"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="9" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#1e2d4d" stroke-width="0.6" opacity="0.55"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="420" rx="18" fill="url(#bg)"/>
+  <rect width="1200" height="420" rx="18" fill="url(#grid)"/>
+  <circle cx="1040" cy="70" r="150" fill="#0ea5e9" opacity="0.08"/>
+  <circle cx="1130" cy="330" r="180" fill="#f59e0b" opacity="0.06"/>
+  <path d="M0 348C220 300 360 390 600 348s330-36 600 8v64H0z" fill="#060a14" opacity="0.72"/>
+
+  <text x="60" y="52" fill="#7dd3fc" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" letter-spacing="2">MADEVAL / OPENCODE-SEO</text>
+  <text x="1140" y="52" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" text-anchor="end">v3.0.0 · MIT</text>
+
+  <g>
+    <rect x="56" y="88" width="548" height="246" rx="14" fill="url(#panel)" stroke="#27415f" stroke-width="1.5"/>
+    <rect x="56" y="88" width="548" height="34" rx="14" fill="#16233d"/>
+    <rect x="56" y="108" width="548" height="14" fill="#16233d"/>
+    <circle cx="78" cy="105" r="5" fill="#f87171"/>
+    <circle cx="96" cy="105" r="5" fill="#fbbf24"/>
+    <circle cx="114" cy="105" r="5" fill="#34d399"/>
+    <text x="132" y="110" fill="#8aa0bd" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12">opencode · seo audit</text>
+
+    <text x="80" y="154" fill="#5eead4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">$ /seo audit https://example.com</text>
+    <text x="80" y="184" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">loading seo-audit skill...</text>
+
+    <text x="80" y="216" fill="#34d399" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">✓ seo-technical</text>
+    <text x="250" y="216" fill="#7f93ad" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">crawl · index · CWV</text>
+    <text x="80" y="240" fill="#34d399" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">✓ seo-content</text>
+    <text x="250" y="240" fill="#7f93ad" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">E-E-A-T · depth</text>
+    <text x="80" y="264" fill="#34d399" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">✓ seo-schema</text>
+    <text x="250" y="264" fill="#7f93ad" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">JSON-LD · rich results</text>
+    <text x="80" y="288" fill="#34d399" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">✓ seo-geo</text>
+    <text x="250" y="288" fill="#7f93ad" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">AI overviews · citability</text>
+    <text x="80" y="316" fill="#fbbf24" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">→ 19 specialist agents · background</text>
+  </g>
+
+  <g>
+    <text x="650" y="160" fill="#f8fafc" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="62" font-weight="800" letter-spacing="-2">OpenCode SEO</text>
+    <rect x="650" y="180" width="380" height="5" rx="2.5" fill="url(#accent)" filter="url(#glow)"/>
+    <text x="650" y="222" fill="#cbd5e1" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="23" font-weight="500">Native SEO audits for OpenCode</text>
+    <text x="650" y="254" fill="#7f93ad" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="15">A community fork of Claude SEO, rebuilt for OpenCode V2.</text>
+
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#a7f3d0">
+      <rect x="650" y="286" width="104" height="30" rx="15" fill="#0f2b2a" stroke="#1f6f63"/>
+      <text x="702" y="306" text-anchor="middle">26 skills</text>
+      <rect x="766" y="286" width="104" height="30" rx="15" fill="#0f2138" stroke="#22527a"/>
+      <text x="818" y="306" text-anchor="middle" fill="#bae6fd">19 agents</text>
+      <rect x="882" y="286" width="116" height="30" rx="15" fill="#2a2210" stroke="#7c5a13"/>
+      <text x="940" y="306" text-anchor="middle" fill="#fde68a">35 commands</text>
+      <rect x="1010" y="286" width="126" height="30" rx="15" fill="#23182f" stroke="#6b3fa0"/>
+      <text x="1073" y="306" text-anchor="middle" fill="#e9d5ff">plugin + MCP</text>
+    </g>
+  </g>
+
+  <text x="60" y="392" fill="#64748b" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Forked from Claude SEO by Agrici Daniel · OpenCode layer, installer, plugin and verification by MADEVAL</text>
+</svg>

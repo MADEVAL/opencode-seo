@@ -229,6 +229,10 @@ export default Plugin.define({
               type: "string",
               description: "Script file name for action run, for example page_checks.py.",
             },
+            extension: {
+              type: "string",
+              description: "Optional extension name, for example banana.",
+            },
             args: {
               type: "array",
               items: { type: "string" },
@@ -251,6 +255,7 @@ export default Plugin.define({
           const request = input as {
             action: "run" | "setup" | "doctor" | "path" | "read"
             script?: string
+            extension?: string
             args?: string[]
             path?: string
             timeout?: number
@@ -266,7 +271,11 @@ export default Plugin.define({
               agent: context.agent,
               ...(source ? { source } : {}),
               action: "seo",
-              resources: [request.action, request.script ?? request.path ?? ""].filter(Boolean),
+              resources: [
+                request.action,
+                request.script ?? request.path ?? "",
+                request.extension ?? "",
+              ].filter(Boolean),
             })
 
             if (request.action === "path") {
@@ -296,7 +305,12 @@ export default Plugin.define({
               if (!request.script || !/^[A-Za-z0-9][A-Za-z0-9_-]*\.py$/.test(request.script)) {
                 throw new Error("action run requires a script name such as page_checks.py")
               }
-              args = [runtime, "run", request.script, ...(request.args ?? [])]
+              if (request.extension && !/^[a-z0-9][a-z0-9-]*$/.test(request.extension)) {
+                throw new Error("extension must be lowercase letters, digits, and hyphens")
+              }
+              args = request.extension
+                ? [runtime, "run", "--extension", request.extension, request.script, ...(request.args ?? [])]
+                : [runtime, "run", request.script, ...(request.args ?? [])]
             } else if (request.action === "setup") {
               args = [runtime, "setup"]
             } else {

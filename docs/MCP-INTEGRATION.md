@@ -1,8 +1,14 @@
 # MCP Integration
 
+## OpenCode
+
+OpenCode uses `mcp.servers` in `opencode.json(c)`. Use the native installer and
+see [OPENCODE-MCP.md](OPENCODE-MCP.md) for commands, credential flags, and
+configuration safety.
+
 ## Overview
 
-Claude SEO can integrate with Model Context Protocol (MCP) servers to access external APIs and enhance analysis capabilities.
+OpenCode SEO can integrate with Model Context Protocol (MCP) servers to access external APIs and enhance analysis capabilities.
 
 ## Available Integrations
 

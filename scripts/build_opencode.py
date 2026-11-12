@@ -155,9 +155,12 @@ def replace_references(text: str, current_skill: str | None, is_agent: bool) -> 
 
 def replace_runtime_calls(text: str) -> str:
     def run_replacement(match: re.Match[str]) -> str:
-        script = match.group(1)
-        rest = match.group(2).strip().rstrip("`").strip()
+        extension = match.group(1)
+        script = match.group(2)
+        rest = match.group(3).strip().rstrip("`").strip()
         if not rest:
+            if extension:
+                return f'seo({{"action": "run", "script": "{script}", "extension": "{extension}"}})'
             return f'seo({{"action": "run", "script": "{script}"}})'
 
         try:
@@ -166,18 +169,12 @@ def replace_runtime_calls(text: str) -> str:
             arguments = rest.split()
 
         args_json = json.dumps(arguments, ensure_ascii=False)
-        return f'seo({{"action": "run", "script": "{script}", "args": {args_json}}})'
+        extension_part = f', "extension": "{extension}"' if extension else ""
+        return f'seo({{"action": "run", "script": "{script}"{extension_part}, "args": {args_json}}})'
 
-    text = re.sub(
-        QUOTED_LAUNCHER + r"\s+run\s+([A-Za-z0-9_.-]+\.py)([^\n`]*)",
-        run_replacement,
-        text,
-    )
-    text = re.sub(
-        LAUNCHER + r"\s+run\s+([A-Za-z0-9_.-]+\.py)([^\n`]*)",
-        run_replacement,
-        text,
-    )
+    run_pattern = r"\s+run\s+(?:--extension\s+([a-z0-9-]+)\s+)?([A-Za-z0-9_.-]+\.py)([^\n`]*)"
+    text = re.sub(QUOTED_LAUNCHER + run_pattern, run_replacement, text)
+    text = re.sub(LAUNCHER + run_pattern, run_replacement, text)
     text = re.sub(QUOTED_LAUNCHER + r"\s+setup(?:\s+--json)?\b", 'seo({"action": "setup"})', text)
     text = re.sub(LAUNCHER + r"\s+setup(?:\s+--json)?\b", 'seo({"action": "setup"})', text)
     text = re.sub(QUOTED_LAUNCHER + r"\s+doctor(?:\s+--json)?\b", 'seo({"action": "doctor"})', text)

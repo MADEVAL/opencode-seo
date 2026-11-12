@@ -28,9 +28,14 @@
 - добавлены launcher-обертки `scripts/opencode-seo` и `scripts/opencode-seo.ps1`;
 - runtime `setup --skip-browser` и `run page_checks.py` проверены на реальном HTML;
 - в OpenCode-копии `seo` и `seo-audit` добавлен протокол фоновых субагентов:
-  параллельный запуск, сбор отчетов, `sessionID`, fallback на inline.
+  параллельный запуск, сбор отчетов, `sessionID`, fallback на inline;
+- добавлен `scripts/install_opencode_extension.py` и обертки
+  `extensions/install-opencode.sh|ps1`: skills, agents, скрипты расширений,
+  `mcp.servers`, маскирование секретов в `--dry-run`, JSONC merge с `.bak`;
+- добавлен `docs/OPENCODE-MCP.md` и OpenCode-раздел в `docs/MCP-INTEGRATION.md`.
 
-Следующая фаза: установщики OpenCode, MCP-расширения и документация.
+Следующая фаза: верхнеуровневые установщики OpenCode, README и полная
+документация установки.
 
 ---
 

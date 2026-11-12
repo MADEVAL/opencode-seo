@@ -76,7 +76,11 @@ def _root() -> Path:
 
 
 def _plugin_version(root: Path) -> str:
-    for manifest in (root / ".claude-plugin" / "plugin.json", root / "runtime-plugin.json"):
+    for manifest in (
+        root / "package.json",
+        root / ".claude-plugin" / "plugin.json",
+        root / "runtime-plugin.json",
+    ):
         try:
             value = json.loads(manifest.read_text(encoding="utf-8")).get("version")
             if isinstance(value, str):
@@ -102,7 +106,14 @@ def _requirements_hash(root: Path) -> str:
 
 
 def _is_plugin(root: Path) -> bool:
-    if os.environ.get("CLAUDE_PLUGIN_DATA") or os.environ.get("CLAUDE_PLUGIN_ROOT"):
+    if (
+        os.environ.get("OPENCODE_SEO_ROOT")
+        or os.environ.get("OPENCODE_SEO_DATA_DIR")
+        or os.environ.get("CLAUDE_PLUGIN_DATA")
+        or os.environ.get("CLAUDE_PLUGIN_ROOT")
+    ):
+        return True
+    if (root / ".opencode-seo-root").is_file():
         return True
     return (root / ".claude-plugin" / "plugin.json").is_file() and not (root / ".git").exists()
 
@@ -121,7 +132,7 @@ def _configured_data_dir(raw: str) -> Path:
 
 
 def _data_dir(root: Path) -> tuple[Path, str]:
-    override = os.environ.get("CLAUDE_SEO_DATA_DIR")
+    override = os.environ.get("OPENCODE_SEO_DATA_DIR") or os.environ.get("CLAUDE_SEO_DATA_DIR")
     if override:
         return _configured_data_dir(override), "override"
     plugin_data = os.environ.get("CLAUDE_PLUGIN_DATA")
@@ -134,7 +145,8 @@ def _data_dir(root: Path) -> tuple[Path, str]:
             base = Path.home() / "Library" / "Application Support"
         else:
             base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
-        return (base / "claude-seo").resolve(), "plugin-fallback"
+        name = "opencode-seo" if (root / ".opencode-seo-root").is_file() else "claude-seo"
+        return (base / name).resolve(), "plugin-fallback"
     return root, "manual"
 
 

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Stable OpenCode SEO launcher. The canonical launcher lives beside this file as
+# claude-seo so Claude installs and older documentation keep working. This
+# wrapper only changes the preferred environment variable and forwards every
+# argument unchanged.
+
+launcher_dir="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+canonical="${launcher_dir}/claude-seo"
+
+if [[ ! -f "${canonical}" ]]; then
+    echo "OpenCode SEO launcher is missing. Reinstall OpenCode SEO." >&2
+    exit 2
+fi
+
+exec "${canonical}" "$@"

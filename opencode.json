@@ -1,0 +1,12 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["AGENTS.md"],
+  "experimental": {
+    "subagent_depth": 1
+  },
+  "permissions": [
+    { "action": "skill", "resource": "seo*", "effect": "allow" },
+    { "action": "subagent", "resource": "seo-*", "effect": "allow" },
+    { "action": "seo", "resource": "*", "effect": "allow" }
+  ]
+}

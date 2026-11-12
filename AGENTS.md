@@ -1,11 +1,17 @@
-# Claude SEO: Multi-Platform Agent Instructions
+# OpenCode SEO: Multi-Platform Agent Instructions
 
+> OpenCode is the primary target. It reads this file, `.opencode/skills`,
+> `.opencode/agents`, `.opencode/commands`, and `.opencode/plugins`. Use `/seo`
+> or `/seo/audit` there. The generated OpenCode layer is refreshed with
+> `python scripts/build_opencode.py`.
+>
+> Claude Code remains supported through `CLAUDE.md`, `skills/`, `agents/`, and
+> `hooks/`.
+>
 > For **Cursor**, **Cursor Cloud Agents**, **Google Antigravity**, **Gemini CLI**,
 > **Grok Build**,
 > **OpenAI Codex CLI**, **Cline**, **Aider**, and any other agent harness that
 > reads project-root agent instructions.
->
-> Claude Code users: see `CLAUDE.md` instead.
 
 ## Cross-platform portability (v2.0.0)
 

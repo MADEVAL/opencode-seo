@@ -383,7 +383,7 @@ def _local_targets() -> tuple[tuple[str, Optional[int]], ...]:
     configuration, and a cached empty tuple from import time would make the
     setting silently inert in a long-lived process.
     """
-    raw = os.environ.get(_LOCAL_TARGETS_ENV, "")
+    raw = os.environ.get("OPENCODE_SEO_LOCAL_TARGETS") or os.environ.get(_LOCAL_TARGETS_ENV, "")
     if not raw.strip():
         return ()
     parsed = (_parse_local_target(part) for part in raw.split(","))

@@ -266,7 +266,8 @@ def query_search_analytics(
                 "The signed-in Google account has no access to it: add that account "
                 "(a service account email, or your own) in Google Search Console > "
                 "Settings > Users and permissions, or use your own account with "
-                "CLAUDE_SEO_GOOGLE_AUTH=adc after gcloud auth application-default login."
+                "Set OPENCODE_SEO_GOOGLE_AUTH=adc (or CLAUDE_SEO_GOOGLE_AUTH=adc) after "
+                "gcloud auth application-default login."
             )
         elif "404" in error_str:
             result["error"] = (

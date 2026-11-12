@@ -215,7 +215,11 @@ def _load_gcloud_adc() -> Optional[dict]:
 def _prefers_gcloud() -> bool:
     """CLAUDE_SEO_GOOGLE_AUTH=adc picks the gcloud sign-in even when a service
     account is configured (which may not have access to every property)."""
-    return os.environ.get("CLAUDE_SEO_GOOGLE_AUTH", "").strip().lower() in ("adc", "gcloud")
+    return (
+        os.environ.get("OPENCODE_SEO_GOOGLE_AUTH")
+        or os.environ.get("CLAUDE_SEO_GOOGLE_AUTH")
+        or ""
+    ).strip().lower() in ("adc", "gcloud")
 
 
 def get_gcloud_credentials(scopes: list):

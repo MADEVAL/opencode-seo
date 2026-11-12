@@ -18,10 +18,33 @@ commands, permissions, MCP configuration, and a local plugin.
 
 - **Native OpenCode target.** `scripts/build_opencode.py` generates
   `.opencode/skills`, `.opencode/agents`, `.opencode/commands`, and
-  `.opencode/plugins` from the canonical sources. `--check` detects drift.
+  `.opencode/plugins` from the canonical sources. `--check` detects drift, and
+  `scripts/sync_opencode_layout.py` is a thin developer wrapper.
 - **Local `opencode-seo` plugin.** Registers the `seo` tool for the managed Python
   runtime, supports `run`, `setup`, `doctor`, `path`, and `read`, and validates
   JSON-LD after edit or write through `execute.after`.
+- **Plugin manifest.** `opencode/plugin/opencode-seo/package.json` declares the
+  local package as an ES module with a `./index.ts` export, and the installer
+  copies it with the plugin.
+- **Extension-aware tool calls.** The `seo` tool accepts an `extension` name,
+  validates it as a lowercase slug, runs
+  `runtime.py run --extension <name> <script>`, and includes the extension in
+  the permission resource list.
+- **OpenCode launchers.** `scripts/opencode-seo` and `scripts/opencode-seo.ps1`
+  resolve the managed runtime and prefer `OPENCODE_SEO_PYTHON`, while the
+  canonical `claude-seo` launcher remains available for Claude installs.
+- **Project configuration.** `opencode.json` grants `skill seo*`,
+  `subagent seo-*`, and the custom `seo` action, limits subagent depth to one,
+  and enables `experimental.todo` for multi-step audits.
+- **Prompt routing and runtime caching.** The plugin rewrites a bare
+  `seo <subcommand> ...` prompt to the matching skill, caches the interpreter
+  and a passing `doctor` probe in plugin storage (5-minute TTL, `refresh` to
+  bypass), and invalidates the probe after setup.
+- **Native image generation.** `/seo image-gen` can use OpenCode's
+  `image_generate` tool (optionally pinned with
+  `experimental.image_generate.model`); the banana extension remains a supported
+  alternative for exact aspect presets, 2K/4K output, thinking level, and
+  multi-image references.
 - **35 OpenCode commands.** `/seo`, `/seo/audit`, `/seo/page`, `/seo/technical`,
   `/seo/schema`, `/seo/sitemap`, `/seo/geo`, `/seo/local`, `/seo/maps`,
   `/seo/google`, `/seo/backlinks`, `/seo/drift`, `/seo/setup`, `/seo/doctor`, and
@@ -31,6 +54,8 @@ commands, permissions, MCP configuration, and a local plugin.
   inline work when a child cannot start.
 - **Top-level installers.** `install-opencode.sh` and `install-opencode.ps1`
   install skills, agents, commands, plugin, runtime, and optional Python setup.
+  The installer supports `--config-dir`, `--no-setup`, `--with-browser`,
+  `--dry-run`, and `--uninstall`.
 - **Native extension installer.** `extensions/install-opencode.sh|ps1` copies
   extension skills and agents, transforms Claude-only frontmatter, merges
   `mcp.servers`, preserves JSONC input with a backup, and supports `--dry-run`.
@@ -41,10 +66,21 @@ commands, permissions, MCP configuration, and a local plugin.
 
 - OpenCode agents use `mode: subagent`, `steps`, and `permissions` instead of
   `tools` and `maxTurns`. Models are inherited from the session by default.
-- OpenCode uses `OPENCODE_SEO_*` environment variables with fallback to the
-  legacy `CLAUDE_SEO_*` names.
+- OpenCode uses `OPENCODE_SEO_*` environment variables, including
+  `OPENCODE_SEO_LOCAL_TARGETS`, with fallback to the legacy `CLAUDE_SEO_*`
+  names.
+- When installed from the OpenCode root, `runtime.py` prints OpenCode SEO
+  messages, reads the version from `package.json`, and uses the `opencode-seo`
+  data directory.
 - `AGENTS.md`, `README.md`, and installation docs lead with OpenCode and retain
-  Claude Code and other harness guidance.
+  Claude Code and other harness guidance. New guides document the OpenCode
+  install (`docs/OPENCODE-INSTALL.md`) and MCP wiring (`docs/OPENCODE-MCP.md`).
+- **Fork identity.** `README.md`, `CITATION.cff`, and the hero banner identify
+  this repository as the MADEVAL fork of AgriciDaniel/claude-seo and describe
+  what the OpenCode layer adds instead of reusing upstream marketing claims.
+- **Image generation backends.** The core skill and agent, and the banana
+  extension mirror, describe native `image_generate` as the primary option and
+  banana as the alternative.
 - Version bumped to 3.0.0 across manifests, skill metadata, installers, and
   generated OpenCode files.
 
@@ -77,6 +113,17 @@ commands, permissions, MCP configuration, and a local plugin.
   cannot leave the file unreadable.
 - **No duplicate instructions.** `opencode.json` relies on automatic
   `AGENTS.md` discovery instead of listing the same file in `instructions`.
+- **`seo read` canonical-source leak.** In a repository checkout the tool now
+  prefers the generated `.opencode` copies, so it cannot return
+  `${CLAUDE_PLUGIN_ROOT}` launcher commands to an OpenCode agent.
+- **Schema-hook readability and scope.** Warning context is unwrapped from the
+  Claude Code hook envelope before it is appended to a tool result, the hook
+  only runs for HTML-like files instead of spawning Python for `.json` or `.md`
+  edits, and its critical-error message is harness-neutral.
+- **Visual agent runtime guidance.** `seo-visual` no longer tells the agent to
+  `pip install playwright`; it points at `/seo setup` and the managed runtime.
+- **CWV range typo.** The `seo-performance` agent shows `2.5s-4.0s` and
+  `200ms-500ms` instead of comma-separated ranges.
 
 ### Compatibility
 
@@ -85,6 +132,9 @@ commands, permissions, MCP configuration, and a local plugin.
 - Cursor, Codex, Cline, Aider, and Antigravity continue to read `AGENTS.md` and
   `skills/`.
 - Existing `claude-seo` launchers and `CLAUDE_SEO_*` variables remain aliases.
+- Verified on OpenCode 2.2.7: 26 skills, 19 agents, and 35 commands are
+  discovered, and the full suite passes with 2372 tests and 33 platform-specific
+  skips.
 
 ## [2.6.0] - 2026-11-10
 

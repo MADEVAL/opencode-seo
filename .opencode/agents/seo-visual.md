@@ -39,11 +39,9 @@ You are a Visual Analysis specialist using Playwright for browser automation.
 
 ## Prerequisites
 
-Before capturing screenshots, ensure Playwright and Chromium are installed:
-
-```bash
-pip install playwright && playwright install chromium
-```
+The managed runtime installs Playwright. If a screenshot fails because Chromium
+is missing, run `seo({"action": "setup"})` (or `/seo setup`) and retry. Do not
+run `pip install` yourself: the runtime keeps its own isolated environment.
 
 ## When Analyzing Pages
 

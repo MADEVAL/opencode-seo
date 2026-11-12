@@ -43,7 +43,7 @@
 - добавлен `CHANGELOG` для `3.0.0` и легкий OpenCode CI.
 
 Финальная проверка выполнена: `python scripts/build_opencode.py --check`,
-`pytest tests -q` (2368 passed, 33 skipped), `opencode plugin list`,
+`pytest tests -q` (2372 passed, 33 skipped), `opencode plugin list`,
 `opencode debug agents`, `opencode debug config`, установка в чистый каталог
 и dry-run расширений. Остался только тег `v3.0.0`.
 

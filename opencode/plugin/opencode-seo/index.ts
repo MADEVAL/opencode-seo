@@ -50,7 +50,13 @@ function resolveRoot(workspace: string): string {
 
 function resolveAssetsRoot(runtimeRoot: string, workspace: string): string {
   const pluginDir = currentPluginDir()
+  // In a repository checkout every asset exists twice: the canonical
+  // Claude-compatible copy at the runtime root and the generated
+  // OpenCode-native copy under `.opencode/`. Reads must prefer the generated
+  // copy so `seo({"action": "read"})` never returns Claude-only instructions
+  // such as `${CLAUDE_PLUGIN_ROOT}` launcher commands to an OpenCode agent.
   const candidates = [
+    path.join(runtimeRoot, ".opencode"),
     runtimeRoot,
     path.resolve(pluginDir, "../.."),
     workspace,
@@ -79,17 +85,121 @@ function pythonCandidates(): PythonCommand[] {
   return candidates
 }
 
+const DOCTOR_TTL_MS = 5 * 60_000
+const PYTHON_STORAGE_KEY = "python/interpreter"
+const DOCTOR_STORAGE_KEY = "runtime/doctor"
+
+const SEO_SUBCOMMANDS = new Set([
+  "agentic",
+  "ahrefs",
+  "audit",
+  "backlinks",
+  "bing",
+  "cluster",
+  "competitor-pages",
+  "content",
+  "content-brief",
+  "dataforseo",
+  "doctor",
+  "drift",
+  "ecommerce",
+  "firecrawl",
+  "flow",
+  "geo",
+  "google",
+  "hreflang",
+  "image-gen",
+  "images",
+  "local",
+  "maps",
+  "matomo",
+  "page",
+  "plan",
+  "profound",
+  "programmatic",
+  "schema",
+  "seranking",
+  "setup",
+  "sitemap",
+  "sxo",
+  "technical",
+  "unlighthouse",
+])
+
+type StoredDoctor = {
+  at: number
+  version: string
+  content: string
+}
+
+function storedPython(value: unknown): PythonCommand | undefined {
+  const payload = value as { command?: unknown; prefix?: unknown } | undefined
+  if (!payload || typeof payload.command !== "string" || !payload.command) return undefined
+  const prefix = Array.isArray(payload.prefix)
+    ? payload.prefix.filter((part): part is string => typeof part === "string")
+    : []
+  return { command: payload.command, prefix }
+}
+
+function storedDoctor(value: unknown): StoredDoctor | undefined {
+  const payload = value as { at?: unknown; version?: unknown; content?: unknown } | undefined
+  if (
+    !payload ||
+    typeof payload.at !== "number" ||
+    typeof payload.version !== "string" ||
+    typeof payload.content !== "string"
+  ) {
+    return undefined
+  }
+  return { at: payload.at, version: payload.version, content: payload.content }
+}
+
+function isSeoSkillSelection(value: unknown): boolean {
+  if (typeof value === "string") return value.startsWith("seo")
+  const id = (value as { id?: unknown } | undefined)?.id
+  return typeof id === "string" && id.startsWith("seo")
+}
+
+// Rewrite a bare "seo <subcommand> ..." prompt into an explicit skill
+// instruction. Slash commands already do this, so leave them untouched, and
+// ignore anything that does not start with the seo keyword.
+function seoPromptHint(text: string): string | undefined {
+  const trimmed = text.trimStart()
+  if (!trimmed || trimmed.startsWith("/")) return undefined
+  const match = /^seo(?:\s+([a-z][a-z-]*))?\b/i.exec(trimmed)
+  if (!match) return undefined
+  const subcommand = (match[1] ?? "").toLowerCase()
+  if (subcommand && !SEO_SUBCOMMANDS.has(subcommand)) return undefined
+  return subcommand
+    ? `The user wants the \`seo\` workflow \`${subcommand}\`. Load the \`seo\` skill and the matching \`seo-*\` sub-skill before answering, then follow that workflow.`
+    : "The user wants an SEO task. Load the `seo` skill before answering and route to the matching `seo-*` sub-skill."
+}
+
+async function readPluginVersion(): Promise<string> {
+  try {
+    const raw = await readFile(path.join(currentPluginDir(), "package.json"), "utf8")
+    const parsed = JSON.parse(raw) as { version?: unknown }
+    return typeof parsed.version === "string" ? parsed.version : "unknown"
+  } catch {
+    return "unknown"
+  }
+}
+
 function findPython(): PythonCommand | undefined {
   for (const candidate of pythonCandidates()) {
-    const result = spawnSync(candidate.command, [...candidate.prefix, "-c", "import sys"], {
-      encoding: "utf8",
-      timeout: 5_000,
-      windowsHide: true,
-    })
-    if (result.status === 0) return candidate
+    if (pythonWorks(candidate)) return candidate
   }
 
   return undefined
+}
+
+function pythonWorks(candidate: PythonCommand): boolean {
+  const result = spawnSync(candidate.command, [...candidate.prefix, "-c", "import sys"], {
+    encoding: "utf8",
+    timeout: 5_000,
+    windowsHide: true,
+  })
+  return result.status === 0
 }
 
 function clip(value: string): string {
@@ -209,6 +319,28 @@ function appendToolText(result: unknown, text: string): unknown {
   return { ...payload, content: text }
 }
 
+// validate-schema.py speaks the Claude Code hook protocol: warnings arrive as
+// `{"hookSpecificOutput": {"additionalContext": "..."}}` on stdout, while
+// critical findings go to stderr with exit code 2. OpenCode appends this text
+// to the tool result, so unwrap the envelope and keep the message readable.
+function schemaHookText(result: ProcessResult): string {
+  let text = result.stdout.trim()
+  if (text.startsWith("{")) {
+    try {
+      const payload = JSON.parse(text) as {
+        hookSpecificOutput?: { additionalContext?: unknown }
+      }
+      const context = payload.hookSpecificOutput?.additionalContext
+      if (typeof context === "string" && context.trim()) text = context.trim()
+    } catch {
+      // Not the hook envelope; keep the raw output.
+    }
+  }
+
+  const stderr = result.code === 2 ? result.stderr.trim() : ""
+  return [text, stderr].filter(Boolean).join("\n").trim()
+}
+
 export default Plugin.define({
   id: "opencode-seo",
   async setup(ctx) {
@@ -227,12 +359,34 @@ export default Plugin.define({
         process.env.CLAUDE_SEO_CACHE_DIR ??
         path.join(homedir(), ".cache", "opencode-seo"),
     }
+    const pluginVersion = await readPluginVersion()
+
+    let pythonCache: PythonCommand | undefined
+    let pythonLoaded = false
+    const resolvePython = async (): Promise<PythonCommand | undefined> => {
+      if (pythonLoaded) return pythonCache
+      pythonLoaded = true
+
+      const remembered = storedPython(
+        await ctx.storage.get(PYTHON_STORAGE_KEY).catch(() => undefined),
+      )
+      if (remembered && pythonWorks(remembered)) {
+        pythonCache = remembered
+        return pythonCache
+      }
+
+      pythonCache = findPython()
+      if (pythonCache) {
+        await ctx.storage.set(PYTHON_STORAGE_KEY, pythonCache).catch(() => undefined)
+      }
+      return pythonCache
+    }
 
     await ctx.tool.transform((editor) => {
       editor.add({
         name: "seo",
         description:
-          "Run the bundled OpenCode SEO Python runtime. Use action run with a script name and arguments, setup or doctor for runtime maintenance, path for the install root, or read for a bundled reference file.",
+          "Run the bundled OpenCode SEO Python runtime. Use action run with a script name and arguments, setup or doctor for runtime maintenance, path for the install root, or read for a bundled reference file. Set refresh to bypass the cached doctor result.",
         input: {
           type: "object",
           properties: {
@@ -262,6 +416,10 @@ export default Plugin.define({
               type: "number",
               description: "Timeout in milliseconds for action run or setup.",
             },
+            refresh: {
+              type: "boolean",
+              description: "Bypass the cached doctor result and probe the runtime again.",
+            },
           },
           required: ["action"],
           additionalProperties: false,
@@ -275,6 +433,7 @@ export default Plugin.define({
             args?: string[]
             path?: string
             timeout?: number
+            refresh?: boolean
           }
 
           const source =
@@ -296,6 +455,19 @@ export default Plugin.define({
           })
 
           try {
+            if (request.action === "doctor" && !request.refresh) {
+              const cached = storedDoctor(
+                await ctx.storage.get(DOCTOR_STORAGE_KEY).catch(() => undefined),
+              )
+              if (
+                cached &&
+                cached.version === pluginVersion &&
+                Date.now() - cached.at < DOCTOR_TTL_MS
+              ) {
+                return { content: cached.content }
+              }
+            }
+
             if (request.action === "path") {
               return { content: runtimeRoot }
             }
@@ -305,7 +477,7 @@ export default Plugin.define({
               return { content: await readAsset(runtimeRoot, assetsRoot, request.path) }
             }
 
-            const python = findPython()
+            const python = await resolvePython()
             if (!python) {
               return {
                 content:
@@ -348,10 +520,21 @@ export default Plugin.define({
               : result.code === 0
                 ? ""
                 : `ERROR: command exited with code ${result.code}`
+            const content = [prefix, output].filter(Boolean).join("\n") || "OK"
 
-            return {
-              content: [prefix, output].filter(Boolean).join("\n") || "OK",
+            // Cache a passing doctor probe briefly so repeated checks do not
+            // spawn Python. Any setup attempt invalidates it, because the
+            // environment may have changed underneath the cache.
+            if (request.action === "doctor" && !prefix && !result.timedOut) {
+              await ctx.storage
+                .set(DOCTOR_STORAGE_KEY, { at: Date.now(), version: pluginVersion, content })
+                .catch(() => undefined)
             }
+            if (request.action === "setup") {
+              await ctx.storage.remove(DOCTOR_STORAGE_KEY).catch(() => undefined)
+            }
+
+            return { content }
           } catch (error) {
             const message = error instanceof Error ? error.message : String(error)
             return { content: `ERROR: ${message}` }
@@ -367,11 +550,11 @@ export default Plugin.define({
       try {
         const raw = event as unknown as { input?: Record<string, unknown> }
         const file = raw.input?.path ?? raw.input?.filePath
-        if (typeof file !== "string" || !/\.(html?|json|md)$/i.test(file)) return
+        if (typeof file !== "string" || !/\.(html?|jsx|tsx|vue|svelte|php|ejs)$/i.test(file)) return
         const resolvedFile = path.isAbsolute(file) ? file : path.resolve(workspace, file)
         if (!existsSync(resolvedFile)) return
 
-        const python = findPython()
+        const python = await resolvePython()
         if (!python) return
 
         const hookScript = path.join(runtimeRoot, "hooks", "validate-schema.py")
@@ -383,15 +566,29 @@ export default Plugin.define({
           env: seoEnv,
         })
 
-        const text = [result.stdout.trim(), result.code === 2 ? result.stderr.trim() : ""]
-          .filter(Boolean)
-          .join("\n")
-          .trim()
+        const text = schemaHookText(result)
         if (!text) return
 
         event.result = appendToolText(event.result, `[schema validation]\n${text}`) as typeof event.result
       } catch {
         return
+      }
+    })
+
+    // Auto-route a bare "seo <subcommand> ..." prompt to the matching skill.
+    // Slash commands are already explicit, and prompts that selected a seo
+    // skill are left untouched.
+    await ctx.session.hook("prompt", (event) => {
+      const text = typeof event.prompt.text === "string" ? event.prompt.text : ""
+      if (!text.trim()) return
+      const selected = event.prompt.skills
+      if (Array.isArray(selected) && selected.some(isSeoSkillSelection)) return
+      const hint = seoPromptHint(text)
+      if (!hint) return
+      event.prompt.text = `${hint}\n\n${text}`
+      event.metadata = {
+        ...(event.metadata as Record<string, unknown> | undefined),
+        seoRouted: true,
       }
     })
   },

@@ -42,7 +42,8 @@ You are an SEO image analyst. When delegated tasks during an SEO audit:
 
 1. Fetch each audited page with `seo({"action": "run", "script": "fetch_page.py", "args": ["<url>", "--json"]})`
    and read its `og:image`, structured data, and image tags. Image generation is not
-   available to this agent; the parent skill decides whether to generate
+   available to this agent; the parent skill decides whether to generate through
+   OpenCode's native image tool or the banana extension
 2. Analyze the site's existing image strategy for SEO impact
 3. Output a structured generation plan. Never auto-generate (cost control)
 
@@ -97,6 +98,7 @@ Priority levels: Critical > High > Medium > Low
 ## Error Handling
 
 - Image generation is not available to this agent: audit existing images and note that generating
-  the planned assets requires the banana extension
+  the planned assets is handled by the parent through OpenCode's `image_generate` tool or the
+  banana extension
 - Report errors clearly with actionable next steps
 - Note data source as "Image Audit (static analysis)" to distinguish from live checks

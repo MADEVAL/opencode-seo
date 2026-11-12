@@ -143,6 +143,7 @@ def test_plugin_and_root_config_exist() -> None:
     assert "skills" not in config, "explicit skills source would override .opencode/skills"
     assert "instructions" not in config, "AGENTS.md is discovered automatically"
     assert config["experimental"]["subagent_depth"] == 1
+    assert config["experimental"]["todo"] is True
 
 
 def test_package_manifest_exposes_the_plugin() -> None:
@@ -166,4 +167,40 @@ def test_plugin_exposes_runtime_bridge_and_schema_hook() -> None:
     for action in ("run", "setup", "doctor", "path", "read"):
         assert f'"{action}"' in plugin
     assert "shell: true" not in plugin
+
+
+def test_plugin_reads_prefer_the_generated_opencode_assets() -> None:
+    plugin = (OPENCODE / "plugins" / "opencode-seo" / "index.ts").read_text(encoding="utf-8")
+    assert 'path.join(runtimeRoot, ".opencode")' in plugin, (
+        "the seo read action must serve the generated OpenCode-native assets, not the "
+        "canonical Claude-compatible copies"
+    )
+
+
+def test_plugin_unwraps_schema_hook_context_and_filters_extensions() -> None:
+    plugin = (OPENCODE / "plugins" / "opencode-seo" / "index.ts").read_text(encoding="utf-8")
+    assert "hookSpecificOutput" in plugin, "warning output must be unwrapped for OpenCode"
+    assert "schemaHookText(result)" in plugin
+    assert r"\.(html?|jsx|tsx|vue|svelte|php|ejs)$" in plugin, (
+        "only HTML-like edits can carry JSON-LD; other extensions should not spawn Python"
+    )
+
+
+def test_plugin_caches_runtime_probes_and_routes_seo_prompts() -> None:
+    plugin = (OPENCODE / "plugins" / "opencode-seo" / "index.ts").read_text(encoding="utf-8")
+    assert "PYTHON_STORAGE_KEY" in plugin
+    assert "DOCTOR_STORAGE_KEY" in plugin
+    assert "ctx.storage" in plugin
+    assert "DOCTOR_TTL_MS" in plugin
+    assert 'ctx.session.hook("prompt"' in plugin
+    assert "seoPromptHint" in plugin
+    assert "refresh?: boolean" in plugin
+
+
+def test_image_gen_offers_native_generation_and_keeps_banana() -> None:
+    text = (OPENCODE / "skills" / "seo-image-gen" / "SKILL.md").read_text(encoding="utf-8")
+    assert "image_generate" in text
+    assert "experimental.image_generate.model" in text
+    assert "banana" in text.lower(), "banana must remain a supported alternative"
+    assert "gemini_generate_image" in text
 

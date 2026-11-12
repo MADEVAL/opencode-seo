@@ -17,7 +17,7 @@
   <a href="https://github.com/MADEVAL/opencode-seo/actions/workflows/ci.yml"><img src="https://github.com/MADEVAL/opencode-seo/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://opencode.ai"><img src="https://img.shields.io/badge/OpenCode-2.2.7-111827" alt="Tested with OpenCode 2.2.7" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-yellow.svg" alt="License: MIT" /></a>
-  <a href="tests/"><img src="https://img.shields.io/badge/tests-2368%20passing-brightgreen" alt="Tests" /></a>
+  <a href="tests/"><img src="https://img.shields.io/badge/tests-2372%20passing-brightgreen" alt="Tests" /></a>
   <img src="https://img.shields.io/badge/version-3.0.0-blue" alt="Version 3.0.0" />
 </p>
 
@@ -59,7 +59,9 @@ This repository is **not** the upstream project. It is maintained by [MADEVAL](h
 - **26 skills** in `.opencode/skills`, with OpenCode frontmatter and relative reference paths.
 - **19 agents** in `.opencode/agents`, using `mode: subagent`, `steps` and ordered `permissions`. Agents inherit the session model instead of pinning Anthropic models.
 - **35 commands** under `.opencode/commands`, including `/seo`, `/seo/audit`, `/seo/page`, `/seo/technical`, `/seo/schema`, `/seo/sitemap`, `/seo/geo`, `/seo/local`, `/seo/maps`, `/seo/google`, `/seo/drift`, `/seo/setup` and extension commands.
-- **Local plugin** `opencode-seo` with the `seo` tool for the managed Python runtime (`run`, `setup`, `doctor`, `path`, `read`) and an `execute.after` JSON-LD validation hook.
+- **Local plugin** `opencode-seo` with the `seo` tool for the managed Python runtime (`run`, `setup`, `doctor`, `path`, `read`), an `execute.after` JSON-LD validation hook, cached interpreter/doctor probes in plugin storage, and a prompt hook that routes a bare `seo <subcommand>` prompt to the matching skill.
+- **Native image generation option**: `/seo image-gen` uses OpenCode's `image_generate` tool when available. The banana extension (Gemini via nanobanana-mcp) remains a fully supported alternative for exact aspect presets, 2K/4K output, thinking level, and multi-image references.
+- **Task tracking and delegation limits**: `experimental.todo` for multi-step audits and `experimental.subagent_depth: 1` so specialists cannot fan out further.
 - **Background subagent protocol** for audits: launch independent specialists together, collect reports as they arrive, keep partial findings, and fall back to inline work when a child cannot start.
 
 ### Runtime and installation
@@ -76,7 +78,7 @@ This repository is **not** the upstream project. It is maintained by [MADEVAL](h
 - Matomo is treated as a REST API, not an MCP server.
 - Extension commands tell the user which extension to install when its skill is missing.
 - The generator has regression checks for `seo run run`, legacy credential paths, vendor-matrix content and cross-skill references.
-- The full test suite covers 2368 passing tests, with 33 platform-specific skips on this Windows machine.
+- The full test suite covers 2372 passing tests, with 33 platform-specific skips on this Windows machine.
 
 ## Install
 
@@ -167,7 +169,7 @@ Claude Code reads `CLAUDE.md`, `skills/`, `agents/`, `hooks/` and `.claude-plugi
 | OpenCode commands | 35 | `.opencode/commands/` |
 | Python scripts | 68 | `scripts/` |
 | Extensions | 9 | `extensions/` |
-| Tests | 2368 passing | `tests/` |
+| Tests | 2372 passing | `tests/` |
 
 The skills cover technical SEO, Core Web Vitals, E-E-A-T and content quality, Schema.org, sitemaps, image SEO, GEO and AI search, local SEO, maps, backlinks, Google APIs, e-commerce, international SEO, drift monitoring, content clustering, SXO, programmatic SEO, competitor pages, the FLOW framework and agent readiness.
 
@@ -200,7 +202,7 @@ python scripts/build_opencode.py --check
 OpenCode target is up to date.
 
 .venv\Scripts\python.exe -m pytest tests -q
-2368 passed, 33 skipped
+2372 passed, 33 skipped
 
 opencode plugin list
 opencode-seo  local

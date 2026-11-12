@@ -1,8 +1,8 @@
 ---
 name: seo-image-gen
-description: "AI image generation for SEO assets: OG/social preview images, blog hero images, schema images, product photography, infographics. Powered by Gemini via nanobanana-mcp. Requires banana extension installed. Use when the user wants an SEO asset and says \"OG image\", \"social preview\", \"hero image\", \"blog image\", \"product photo\", \"infographic\", \"seo image\", \"image-gen\", \"favicon\", \"schema image\", or \"pinterest pin\". Not for general artwork, banners, or thumbnails unrelated to SEO."
+description: "AI image generation for SEO assets: OG/social preview images, blog hero images, schema images, product photography, infographics. Uses OpenCode's native image generation tool when available, with the banana (nanobanana-mcp / Gemini) extension as an alternative. Use when the user wants an SEO asset and says \"OG image\", \"social preview\", \"hero image\", \"blog image\", \"product photo\", \"infographic\", \"seo image\", \"image-gen\", \"favicon\", \"schema image\", or \"pinterest pin\". Not for general artwork, banners, or thumbnails unrelated to SEO."
 license: MIT
-compatibility: "Requires nanobanana MCP server"
+compatibility: "OpenCode native image generation or the nanobanana MCP server"
 metadata:
   author: AgriciDaniel
   version: "3.0.0"
@@ -11,30 +11,42 @@ metadata:
 
 # SEO Image Gen: AI Image Generation for SEO Assets (Extension)
 
-Generate production-ready images for SEO use cases using Gemini's image generation
-via the banana Creative Director pipeline. Maps SEO needs to optimized domain modes,
-aspect ratios, and resolution defaults.
+Generate production-ready images for SEO use cases with OpenCode's native image
+generation tool or Gemini through the banana Creative Director pipeline. Maps SEO
+needs to optimized domain modes, aspect ratios, and resolution defaults.
 
 ## Architecture Note
 
 This extension is built on [Claude Banana](https://github.com/AgriciDaniel/banana-claude),
-the standalone AI image generation skill for OpenCode.
+the standalone AI image generation skill for OpenCode. In OpenCode it can also
+use the built-in image generation tool, so the banana extension is optional.
 
 This skill has two components with distinct roles:
 - **SKILL.md** (this file): Handles interactive `/seo image-gen` commands for generating images
 - **Agent** (`agents/seo-image-gen.md`): Audit-only analyst spawned during `/seo audit` to assess existing OG/social images and produce a generation plan (never auto-generates)
 
-## Prerequisites
+## Backends
 
-This skill requires the banana extension to be installed:
-```bash
-./extensions/banana/install.sh
-```
+Generate through whichever backend is available:
 
-**Check availability:** Before using any image generation tool, verify the MCP server
-is connected by checking if `gemini_generate_image` or `set_aspect_ratio` tools are
-available. If tools are not available, inform the user the extension is not installed
-and provide install instructions.
+1. **OpenCode native image generation (preferred for simple assets).** The
+   `image_generate` tool (`experimental_image_generate`). Set a default with
+   `experimental.image_generate.model` in `opencode.json(c)`, or leave it unset
+   and OpenCode picks an available image model. One image per call; the tool
+   returns a saved file path.
+2. **banana extension (alternative, full pipeline).** Gemini via
+   `nanobanana-mcp`, installed with:
+
+   ```bash
+   ./extensions/banana/install.sh
+   ```
+
+**Check availability first.** If `image_generate` is available, use it for OG
+images, heroes, and other straightforward assets. Prefer banana when the user
+needs its advanced controls: exact aspect-ratio presets, 2K/4K output, thinking
+level, multi-image references, or its cost ledger. If neither backend is
+available, say so, give the install or configuration step, and still deliver the
+audit and generation plan.
 
 ## Quick Reference
 
@@ -49,7 +61,8 @@ and provide install instructions.
 
 ## SEO Image Use Cases
 
-Each use case maps to pre-configured banana parameters:
+Each use case maps to pre-configured banana parameters (or the closest native
+prompt and aspect ratio):
 
 | Use Case | Aspect Ratio | Resolution | Domain Mode | Notes |
 |----------|-------------|------------|-------------|-------|
@@ -68,12 +81,14 @@ For every generation request:
 
 1. **Identify use case** from command or context (og, hero, product, etc.)
 2. **Apply SEO defaults** from the use cases table above
-3. **Set aspect ratio** via `set_aspect_ratio` MCP tool
+3. **Set aspect ratio**: on banana, call `set_aspect_ratio`; with native generation,
+   describe the intended crop in the prompt and check the returned dimensions
 4. **Construct Reasoning Brief** using the banana Creative Director pipeline:
    - Load `references/prompt-engineering.md` for the 6-component system
    - Apply domain mode emphasis (Subject 30%, Style 25%, Context 15%, etc.)
    - Be SPECIFIC and VISCERAL: describe what the camera sees
-5. **Generate** via `gemini_generate_image` MCP tool
+5. **Generate** with `image_generate` (native, a prompt plus output path) or
+   `gemini_generate_image` (banana)
 6. **Post-generation SEO checklist** (see below)
 
 ### Check for Presets
@@ -118,11 +133,14 @@ After every successful generation, guide the user on:
 
 Image generation costs money. Be transparent:
 - Show estimated cost before generating (especially for batch)
-- Log every generation in the installed Banana MCP/tool ledger when available
-- Use the installed Banana MCP/tool usage summary if user asks about usage
+- With banana, log every generation in the installed MCP/tool ledger when available
+  and use its usage summary if the user asks about consumption
+- With OpenCode native generation, check the configured provider/model pricing
+  before quoting a cost
 
 Approximate costs:
-- Verify current pricing in the installed MCP/tool configuration before quoting
+- Verify current pricing in the installed MCP/tool configuration or provider
+  settings before quoting
 
 ## Model Routing
 
@@ -137,12 +155,13 @@ Approximate costs:
 
 | Error | Resolution |
 |-------|-----------|
-| MCP not configured | Run `./extensions/banana/install.sh` |
+| Native tool unavailable | Configure `experimental.image_generate.model` in `opencode.json(c)`, or install banana: `./extensions/banana/install.sh` |
+| MCP not configured | Run `./extensions/banana/install.sh`, or use native generation |
 | API key invalid | New key at https://aistudio.google.com/apikey |
 | Rate limited (429) | Wait 60s, retry. Free tier: ~10 RPM / ~500 RPD |
 | `IMAGE_SAFETY` | Rephrase prompt - see `references/prompt-adaptation-safety.md` |
-| MCP unavailable | Configure MCP with `./extensions/banana/install.sh`; claude-seo does not vendor a local generation fallback script |
-| Extension not installed | Show install instructions: `./extensions/banana/install.sh` |
+| MCP unavailable | Use `image_generate` when available, or configure banana with `./extensions/banana/install.sh`; the skill does not vendor a local generation fallback script |
+| Extension not installed | Use native generation, or show install instructions: `./extensions/banana/install.sh` |
 
 ## Cross-Skill Integration
 

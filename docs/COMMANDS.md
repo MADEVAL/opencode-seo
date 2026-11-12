@@ -567,9 +567,13 @@ PDF and HTML reports generated via WeasyPrint and matplotlib.
 
 ### `/seo image-gen [use-case] <description>`
 
-AI image generation for SEO assets (extension). Powered by Gemini via nanobanana-mcp.
+AI image generation for SEO assets (extension). Uses OpenCode's native
+`image_generate` tool when available, or Gemini via nanobanana-mcp.
 
-**Prerequisites:** Banana extension installed (`./extensions/banana/install.sh`)
+**Prerequisites:** OpenCode native image generation configured
+(`experimental.image_generate.model`), or the banana extension installed
+(`./extensions/banana/install.sh`). Banana remains the full-featured alternative
+for exact aspect presets, 2K/4K output, thinking level, and multi-image references.
 
 **Use Cases:**
 ```

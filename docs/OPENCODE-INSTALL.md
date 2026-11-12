@@ -99,7 +99,7 @@ project or global settings only when you need to override defaults:
 ```jsonc
 {
   "$schema": "https://opencode.ai/config.json",
-  "experimental": { "subagent_depth": 1 },
+  "experimental": { "subagent_depth": 1, "todo": true },
   "permissions": [
     { "action": "skill", "resource": "seo*", "effect": "allow" },
     { "action": "subagent", "resource": "seo-*", "effect": "allow" },

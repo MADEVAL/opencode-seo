@@ -1,10 +1,10 @@
 ---
 name: seo-image-gen
-description: "AI image generation for SEO assets: OG/social preview images, blog hero images, schema images, product photography, infographics. Powered by Gemini via nanobanana-mcp. Requires banana extension installed. Use when the user wants an SEO asset and says \"OG image\", \"social preview\", \"hero image\", \"blog image\", \"product photo\", \"infographic\", \"seo image\", \"image-gen\", \"favicon\", \"schema image\", or \"pinterest pin\". Not for general artwork, banners, or thumbnails unrelated to SEO."
+description: "AI image generation for SEO assets: OG/social preview images, blog hero images, schema images, product photography, infographics. Powered by Gemini via nanobanana-mcp (banana extension). OpenCode's native image tool is an alternative when banana is unavailable. Use when the user wants an SEO asset and says \"OG image\", \"social preview\", \"hero image\", \"blog image\", \"product photo\", \"infographic\", \"seo image\", \"image-gen\", \"favicon\", \"schema image\", or \"pinterest pin\". Not for general artwork, banners, or thumbnails unrelated to SEO."
 argument-hint: "[og|hero|product|infographic|custom|batch] <description>"
 user-invocable: true
 license: MIT
-compatibility: "Requires nanobanana MCP server"
+compatibility: "Requires nanobanana MCP server; OpenCode native image generation is an alternative"
 metadata:
   author: AgriciDaniel
   version: "3.0.0"
@@ -28,15 +28,16 @@ This skill has two components with distinct roles:
 
 ## Prerequisites
 
-This skill requires the banana extension to be installed:
+This skill's full Creative Director pipeline requires the banana extension:
 ```bash
 ./extensions/banana/install.sh
 ```
 
 **Check availability:** Before using any image generation tool, verify the MCP server
 is connected by checking if `gemini_generate_image` or `set_aspect_ratio` tools are
-available. If tools are not available, inform the user the extension is not installed
-and provide install instructions.
+available. If banana tools are not available, use OpenCode's native `image_generate`
+tool when it is configured, or inform the user the extension is not installed and
+provide install instructions.
 
 ## Quick Reference
 

@@ -4,7 +4,7 @@ description: "Run a full-site SEO audit and return a scored, prioritized report.
 license: MIT
 metadata:
   author: AgriciDaniel
-  version: "2.6.0"
+  version: "3.0.0"
   category: seo
 ---
 

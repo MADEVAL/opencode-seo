@@ -22,7 +22,7 @@ claude-seo/
   CONTRIBUTORS.md                    # Community credits (Pro Hub Challenge)
   AGENTS.md                          # Multi-platform agent instructions (Cursor, Antigravity)
   .claude-plugin/
-    plugin.json                    # Plugin manifest (v2.6.0)
+    plugin.json                    # Plugin manifest (v3.0.0)
     marketplace.json               # Marketplace catalog for distribution
   skills/                            # 26 sub-skills (auto-discovered)
     seo/                           # Main orchestrator skill
@@ -90,7 +90,7 @@ claude-seo/
     seo-flow.md                  # FLOW framework integration
   hooks/                           # Quality gate hooks
     hooks.json                   # PostToolUse schema validation
-  scripts/                         # 63 Python execution scripts
+  scripts/                         # 67 Python execution scripts
     google_auth.py               # Credential management (OAuth, SA, API key, 4-tier detection)
     google_properties.py         # Picks the GSC/GA4 property for the audited domain, fails closed on a mismatch
     backlinks_auth.py            # Backlink API credential management (Moz, Bing)
@@ -153,6 +153,10 @@ claude-seo/
     release_sign.py              # SHA-256 manifest generator for release signing
     verify_release.py            # Verify checkout integrity against a release manifest
     sitemap_discovery.py         # Sitemap discovery (robots.txt, common paths)
+    build_opencode.py            # Generate .opencode and dist targets from canonical sources
+    install_opencode_extension.py # Native OpenCode extension and MCP installer
+    install_opencode_package.py  # Top-level OpenCode package installer and uninstaller
+    sync_opencode_layout.py      # Developer wrapper for the OpenCode generator
     runtime.py                   # Managed runtime behind the claude-seo launcher
   schema/                          # Schema.org JSON-LD templates
   extensions/                      # Optional add-on install helpers

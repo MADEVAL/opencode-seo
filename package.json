@@ -1,6 +1,6 @@
 {
   "name": "opencode-seo",
-  "version": "2.6.0",
+  "version": "3.0.0",
   "private": true,
   "description": "OpenCode SEO: comprehensive SEO analysis for OpenCode, Claude Code, and other agent harnesses.",
   "license": "MIT"

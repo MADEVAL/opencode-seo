@@ -1,7 +1,7 @@
 [project]
 name = "claude-seo"
-version = "2.6.0"
-description = "Comprehensive SEO analysis skill for Claude Code"
+version = "3.0.0"
+description = "OpenCode SEO: comprehensive SEO analysis for OpenCode, Claude Code, and other agent harnesses"
 requires-python = ">=3.11"
 license = "MIT"
 readme = "README.md"

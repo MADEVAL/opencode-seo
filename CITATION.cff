@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: Claude SEO
+title: OpenCode SEO
 message: >-
   If you use this software, please cite it using the metadata from this file.
 type: software
@@ -11,8 +11,8 @@ authors:
 repository-code: 'https://github.com/AgriciDaniel/claude-seo'
 url: 'https://github.com/AgriciDaniel/claude-seo'
 license: MIT
-version: 2.6.0
-date-released: '2026-11-10'
+version: 3.0.0
+date-released: '2026-11-12'
 keywords:
   - seo
   - claude-code

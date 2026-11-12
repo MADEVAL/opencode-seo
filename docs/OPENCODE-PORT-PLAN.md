@@ -35,9 +35,12 @@
 - добавлен `docs/OPENCODE-MCP.md` и OpenCode-раздел в `docs/MCP-INTEGRATION.md`;
 - добавлены `install-opencode.sh|ps1` и `scripts/install_opencode_package.py`
   с установкой, проверкой и удалением;
-- обновлены `README.md`, `docs/INSTALLATION.md`, `docs/OPENCODE-INSTALL.md`.
+- обновлены `README.md`, `docs/INSTALLATION.md`, `docs/OPENCODE-INSTALL.md`;
+- версия поднята до `3.0.0` во всех манифестах, skill metadata, установщиках
+  и сгенерированном OpenCode-слое;
+- добавлен `CHANGELOG` для `3.0.0` и легкий OpenCode CI.
 
-Следующая фаза: CI, релизная проверка, обновление тестов и версии 3.0.0.
+Следующая фаза: финальная релизная проверка и тег `v3.0.0`.
 
 ---
 

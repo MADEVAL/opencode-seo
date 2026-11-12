@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-11-12
+
+OpenCode becomes the primary target while Claude Code and other harnesses stay
+supported. The canonical `skills/`, `agents/`, `hooks/`, and `.claude-plugin/`
+layout remains in place. A generated OpenCode layer adds native frontmatter,
+commands, permissions, MCP configuration, and a local plugin.
+
+### Added
+
+- **Native OpenCode target.** `scripts/build_opencode.py` generates
+  `.opencode/skills`, `.opencode/agents`, `.opencode/commands`, and
+  `.opencode/plugins` from the canonical sources. `--check` detects drift.
+- **Local `opencode-seo` plugin.** Registers the `seo` tool for the managed Python
+  runtime, supports `run`, `setup`, `doctor`, `path`, and `read`, and validates
+  JSON-LD after edit or write through `execute.after`.
+- **35 OpenCode commands.** `/seo`, `/seo/audit`, `/seo/page`, `/seo/technical`,
+  `/seo/schema`, `/seo/sitemap`, `/seo/geo`, `/seo/local`, `/seo/maps`,
+  `/seo/google`, `/seo/backlinks`, `/seo/drift`, `/seo/setup`, `/seo/doctor`, and
+  the rest of the command surface.
+- **Background subagent protocol.** OpenCode audit skills launch specialists in
+  parallel, collect reports, support `sessionID` follow-ups, and fall back to
+  inline work when a child cannot start.
+- **Top-level installers.** `install-opencode.sh` and `install-opencode.ps1`
+  install skills, agents, commands, plugin, runtime, and optional Python setup.
+- **Native extension installer.** `extensions/install-opencode.sh|ps1` copies
+  extension skills and agents, transforms Claude-only frontmatter, merges
+  `mcp.servers`, preserves JSONC input with a backup, and supports `--dry-run`.
+- **OpenCode CI.** A lightweight workflow checks generated drift, forbidden
+  Claude tokens, and the OpenCode test suite without installing the full runtime.
+
+### Changed
+
+- OpenCode agents use `mode: subagent`, `steps`, and `permissions` instead of
+  `tools` and `maxTurns`. Models are inherited from the session by default.
+- OpenCode uses `OPENCODE_SEO_*` environment variables with fallback to the
+  legacy `CLAUDE_SEO_*` names.
+- `AGENTS.md`, `README.md`, and installation docs lead with OpenCode and retain
+  Claude Code and other harness guidance.
+- Version bumped to 3.0.0 across manifests, skill metadata, installers, and
+  generated OpenCode files.
+
+### Compatibility
+
+- Claude Code continues to use `CLAUDE.md`, `skills/`, `agents/`, `hooks/`, and
+  `.claude-plugin/`.
+- Cursor, Codex, Cline, Aider, and Antigravity continue to read `AGENTS.md` and
+  `skills/`.
+- Existing `claude-seo` launchers and `CLAUDE_SEO_*` variables remain aliases.
+
 ## [2.6.0] - 2026-11-10
 
 Deterministic checks ported from web-obs, the sister crawler project. Work

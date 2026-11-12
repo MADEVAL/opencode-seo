@@ -11,7 +11,7 @@ description: >
 license: MIT
 metadata:
   author: AgriciDaniel
-  version: "2.6.0"
+  version: "3.0.0"
   category: seo
 ---
 

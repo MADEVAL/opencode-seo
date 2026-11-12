@@ -1,6 +1,6 @@
 # OpenCode SEO: план полной поддержки OpenCode V2 с сохранением других harness
 
-Статус: выполняется. Фаза 0 и основная часть Фазы 1 завершены.
+Статус: выполняется. Фазы 0-9 завершены, остается релизная проверка.
 Цель: сделать OpenCode главным и лучшим образом поддерживаемым harness, не удаляя
 поддержку Claude Code, Cursor, Codex, Cline, Aider, Antigravity и других клиентов,
 которые читают `AGENTS.md` или `SKILL.md`.
@@ -32,10 +32,12 @@
 - добавлен `scripts/install_opencode_extension.py` и обертки
   `extensions/install-opencode.sh|ps1`: skills, agents, скрипты расширений,
   `mcp.servers`, маскирование секретов в `--dry-run`, JSONC merge с `.bak`;
-- добавлен `docs/OPENCODE-MCP.md` и OpenCode-раздел в `docs/MCP-INTEGRATION.md`.
+- добавлен `docs/OPENCODE-MCP.md` и OpenCode-раздел в `docs/MCP-INTEGRATION.md`;
+- добавлены `install-opencode.sh|ps1` и `scripts/install_opencode_package.py`
+  с установкой, проверкой и удалением;
+- обновлены `README.md`, `docs/INSTALLATION.md`, `docs/OPENCODE-INSTALL.md`.
 
-Следующая фаза: верхнеуровневые установщики OpenCode, README и полная
-документация установки.
+Следующая фаза: CI, релизная проверка, обновление тестов и версии 3.0.0.
 
 ---
 

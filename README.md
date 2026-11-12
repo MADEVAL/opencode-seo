@@ -1,15 +1,15 @@
 <!--
-  Claude SEO (claude-seo): free, open-source SEO audit plugin for Claude Code by Agrici Daniel.
+  OpenCode SEO (opencode-seo): free, open-source SEO audit plugin for OpenCode, with Claude Code support retained, by Agrici Daniel.
   Technical SEO, Core Web Vitals, E-E-A-T, Schema.org, AI search (GEO), local SEO, e-commerce and international SEO.
   26 sub-skills and 19 specialist agents. MIT licensed.
 -->
 
 <img src="assets/readme/v3/hero.svg" width="1200" height="420" alt="Claude SEO: rank in Google, get cited by AI. Three bots climb from #48 to #1 by fixing crawl, speed, schema, AI access and authority, then Google, ChatGPT, Perplexity, Gemini and Claude cite the site." />
 
-<h1 align="center">Claude SEO</h1>
+<h1 align="center">OpenCode SEO</h1>
 
 <p align="center">
-  <b>Free, open-source SEO audits inside <a href="https://claude.com/product/claude-code">Claude Code</a>.</b><br />
+  <b>Free, open-source SEO audits inside <a href="https://opencode.ai">OpenCode</a>, with Claude Code support retained.</b><br />
   Rank higher in Google and get cited by AI search.
 </p>
 
@@ -37,7 +37,7 @@
   <a href="https://trendshift.io/repositories/21053"><img src="https://trendshift.io/api/badge/repositories/21053" alt="AgriciDaniel/claude-seo on Trendshift: GitHub Trending #12 Repository Of The Day" width="250" height="55" /></a>
 </p>
 
-**Claude SEO is a free SEO plugin for Claude Code.** Give it any website and it runs a full SEO audit in 10 to 15 minutes, then hands you a clear action plan, sorted by what matters most.
+**OpenCode SEO is a free SEO plugin for OpenCode, with Claude Code support retained.** Give it any website and it runs a full SEO audit in 10 to 15 minutes, then hands you a clear action plan, sorted by what matters most.
 
 It checks everything a good SEO consultant would:
 
@@ -47,7 +47,41 @@ It checks everything a good SEO consultant would:
 - **AI search (GEO).** How likely Google AI Overviews, AI Mode, ChatGPT, Perplexity and Gemini are to cite your pages.
 - **Local and e-commerce SEO.** Google Business Profile, reviews, map pack, product pages and international sites.
 
-Claude SEO is built from 26 sub-skills and 19 specialist agents, and up to 17 agents work on your site at the same time. Every recommendation explains why it matters and how you will know it worked.
+OpenCode SEO is built from 26 sub-skills and 19 specialist agents, and up to 17 agents work on your site at the same time. Every recommendation explains why it matters and how you will know it worked.
+
+## OpenCode
+
+OpenCode is the primary target. It gets native skills, agents, slash commands, a local plugin, background subagents, and `mcp.servers` configuration.
+
+Unix:
+
+```bash
+./install-opencode.sh
+```
+
+Windows:
+
+```powershell
+.\install-opencode.ps1
+```
+
+Then use:
+
+```text
+/seo
+/seo/audit https://example.com
+/seo/page https://example.com
+@seo
+```
+
+Extensions:
+
+```bash
+./extensions/install-opencode.sh dataforseo --username me@example.com --password secret
+./extensions/install-opencode.sh firecrawl --key fc-...
+```
+
+Details: [docs/OPENCODE-INSTALL.md](docs/OPENCODE-INSTALL.md) and [docs/OPENCODE-MCP.md](docs/OPENCODE-MCP.md).
 
 ## See it in action
 

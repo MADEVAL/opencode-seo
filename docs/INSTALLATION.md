@@ -1,5 +1,22 @@
 # Installation Guide
 
+## OpenCode
+
+OpenCode is the primary target. Install the native layer with:
+
+```bash
+./install-opencode.sh
+```
+
+Windows:
+
+```powershell
+.\install-opencode.ps1
+```
+
+See [OPENCODE-INSTALL.md](OPENCODE-INSTALL.md) for verification, extensions, and
+uninstall. Claude Code and other harnesses use the instructions below.
+
 ## Prerequisites
 
 - **Python 3.11 to 3.14** with pip. Python 3.10 reached end of life in October 2026, and 3.15 waits on the Google Ads client library

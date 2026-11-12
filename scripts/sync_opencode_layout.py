@@ -10,13 +10,16 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from build_opencode import main  # noqa: E402
+def main() -> int:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from build_opencode import main as build_main
 
-
-if __name__ == "__main__":
     args = ["--check"] if "--check" in sys.argv[1:] else []
     if "--dist" in sys.argv[1:]:
         args.append("--dist")
-    raise SystemExit(main(args))
+    return build_main(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

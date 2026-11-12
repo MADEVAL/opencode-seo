@@ -18,7 +18,6 @@ import os
 import re
 import shlex
 import shutil
-import sys
 import tempfile
 from pathlib import Path
 from typing import Iterable

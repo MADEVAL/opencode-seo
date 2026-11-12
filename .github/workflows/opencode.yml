@@ -1,0 +1,96 @@
+name: OpenCode
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".opencode/**"
+      - "opencode/**"
+      - "opencode.json"
+      - "package.json"
+      - "scripts/build_opencode.py"
+      - "scripts/install_opencode_extension.py"
+      - "scripts/install_opencode_package.py"
+      - "scripts/sync_opencode_layout.py"
+      - "scripts/runtime.py"
+      - "scripts/claude-seo"
+      - "scripts/opencode-seo"
+      - "scripts/opencode-seo.ps1"
+      - "tests/test_opencode_*.py"
+      - "tests/test_no_em_dash.py"
+      - "extensions/install-opencode.*"
+      - "install-opencode.*"
+      - "docs/OPENCODE-*.md"
+      - "AGENTS.md"
+      - ".github/workflows/opencode.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".opencode/**"
+      - "opencode/**"
+      - "opencode.json"
+      - "package.json"
+      - "scripts/build_opencode.py"
+      - "scripts/install_opencode_extension.py"
+      - "scripts/install_opencode_package.py"
+      - "scripts/sync_opencode_layout.py"
+      - "scripts/runtime.py"
+      - "scripts/claude-seo"
+      - "scripts/opencode-seo"
+      - "scripts/opencode-seo.ps1"
+      - "tests/test_opencode_*.py"
+      - "tests/test_no_em_dash.py"
+      - "extensions/install-opencode.*"
+      - "install-opencode.*"
+      - "docs/OPENCODE-*.md"
+      - "AGENTS.md"
+      - ".github/workflows/opencode.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  opencode:
+    name: OpenCode target
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Install minimal test dependencies
+        run: python -m pip install --disable-pip-version-check pytest requests
+
+      - name: Compile OpenCode scripts
+        run: |
+          python -m py_compile \
+            scripts/build_opencode.py \
+            scripts/install_opencode_extension.py \
+            scripts/install_opencode_package.py \
+            scripts/sync_opencode_layout.py \
+            scripts/runtime.py
+
+      - name: Check generated target
+        run: python scripts/build_opencode.py --check
+
+      - name: Reject Claude-only tokens in the OpenCode target
+        run: |
+          if grep -RInE '\$\{CLAUDE_PLUGIN_ROOT\}|mcp__|maxTurns' .opencode/skills .opencode/agents; then
+            echo "::error::Claude-only tokens found in the generated OpenCode target"
+            exit 1
+          fi
+
+      - name: Run OpenCode tests
+        run: |
+          pytest -q \
+            tests/test_opencode_generation.py \
+            tests/test_opencode_orchestration.py \
+            tests/test_opencode_extension_install.py \
+            tests/test_opencode_package_install.py \
+            tests/test_opencode_env_aliases.py \
+            tests/test_no_em_dash.py

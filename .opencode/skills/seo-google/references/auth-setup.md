@@ -40,7 +40,7 @@ Navigate to **APIs & Services > Library** and enable:
 ## Step 4: Create a Service Account
 
 1. **IAM & Admin > Service Accounts > Create Service Account**
-2. Name: `claude-seo` (or similar)
+2. Name: `opencode-seo` (or similar)
 3. Skip optional permissions steps
 4. Click on the created service account > **Keys > Add Key > Create new key > JSON**
 5. Download the JSON file and store it securely (e.g., `~/.config/opencode-seo/service_account.json`)

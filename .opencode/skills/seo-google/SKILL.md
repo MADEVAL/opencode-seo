@@ -17,7 +17,7 @@ metadata:
 # Google SEO APIs
 
 Direct access to Google's own SEO data. Bridges the gap between crawl-based
-analysis (existing claude-seo skills) and Google's real-time field data: actual
+analysis (existing opencode-seo skills) and Google's real-time field data: actual
 Chrome user metrics, real indexation status, search performance, and organic traffic.
 
 All APIs are free. Setup requires a Google Cloud project with API key and/or

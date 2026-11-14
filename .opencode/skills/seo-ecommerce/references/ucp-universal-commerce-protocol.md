@@ -89,7 +89,7 @@ Merchants join a **waitlist** (interest form linked from developers.google.com/m
 Exact identifiers are governed by the live spec. The namespace pattern is
 `dev.ucp.<domain>.<verb>`; version values are date-based.
 
-## What claude-seo audits
+## What opencode-seo audits
 
 `/seo ecommerce <url>` should report:
 

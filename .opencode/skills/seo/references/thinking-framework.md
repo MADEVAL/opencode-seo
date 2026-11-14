@@ -149,7 +149,7 @@ surfaced?).
 
 ## When to escalate to the user
 
-These principles are claude-seo's; they are not the user's. Surface them
+These principles are opencode-seo's; they are not the user's. Surface them
 for the user when:
 
 - A recommendation requires accepting an assumption you'd rather not own

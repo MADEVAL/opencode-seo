@@ -53,6 +53,37 @@ ENV_RULES = (
     ("*.env.example", "allow"),
 )
 
+# Assets copied through untouched are still text. Normalise their newlines so a
+# CRLF checkout (core.autocrlf=true on Windows) produces the same bytes as the
+# committed LF target and `--check` stays platform independent.
+TEXT_ASSET_SUFFIXES = frozenset(
+    {
+        ".css",
+        ".csv",
+        ".html",
+        ".htm",
+        ".js",
+        ".json",
+        ".lock",
+        ".mjs",
+        ".ps1",
+        ".py",
+        ".sh",
+        ".svg",
+        ".toml",
+        ".ts",
+        ".txt",
+        ".xml",
+        ".yaml",
+        ".yml",
+    }
+)
+
+# The OpenCode install root is OpenCode-only. The Claude-style launchers and
+# hook manifest belong to the Claude/Cursor layouts and only add dead weight.
+INSTALL_EXCLUDED_SCRIPTS = frozenset({"claude-seo", "opencode-seo", "opencode-seo.ps1"})
+INSTALL_EXCLUDED_HOOKS = frozenset({"hooks.json", "run-python-hook.js"})
+
 RUNTIME_PARAGRAPH = (
     "**Runtime:** Call the `seo` tool with action `run`, a script name, and "
     "arguments, for example "
@@ -209,6 +240,10 @@ def transform_body(text: str, current_skill: str | None, is_agent: bool = False)
     text = text.replace("claude-seo uses", "OpenCode SEO uses")
     text = text.replace("Match existing claude-seo patterns:", "Match existing output patterns:")
     text = text.replace("Format output to match claude-seo conventions", "Format output to match the project's conventions")
+    # `claude-seo.md` is the upstream documentation host, not a product name.
+    # Point examples at a neutral domain before the branding pass below.
+    text = text.replace("claude-seo.md", "example.com")
+    text = text.replace("claude-seo", "opencode-seo")
     text = text.replace("CLAUDE.md", "AGENTS.md")
     text = text.replace(
         "schema/templates.json",
@@ -353,6 +388,9 @@ def copy_transformed(source: Path, target: Path, current_skill: str | None = Non
                 else transform_skill(text, current_skill or item.parent.name)
             )
             destination.write_text(transformed, encoding="utf-8", newline="\n")
+        elif item.suffix.lower() in TEXT_ASSET_SUFFIXES:
+            content = item.read_bytes().replace(b"\r\n", b"\n")
+            destination.write_bytes(content)
         else:
             shutil.copy2(item, destination)
 
@@ -462,19 +500,38 @@ def check_tree() -> int:
         return 1
 
 
+def install_ignore(source: Path):
+    """Skip payload files that only belong to the Claude/Cursor layouts."""
+
+    def ignore(directory: str, names: list[str]) -> set[str]:
+        skipped = {
+            name for name in names if name == "__pycache__" or name.endswith((".pyc", ".pyo"))
+        }
+        if Path(directory) == source:
+            if source.name == "scripts":
+                skipped |= INSTALL_EXCLUDED_SCRIPTS & set(names)
+            elif source.name == "hooks":
+                skipped |= INSTALL_EXCLUDED_HOOKS & set(names)
+        return skipped
+
+    return ignore
+
+
 def copy_install_root(destination: Path) -> None:
     destination.mkdir(parents=True, exist_ok=True)
-    for name in ("scripts", "data", "schema"):
+    for name in ("scripts", "data", "schema", "hooks"):
         source = ROOT / name
         if source.is_dir():
-            shutil.copytree(source, destination / name, dirs_exist_ok=True)
-    for name in ("requirements.txt", "pyproject.toml"):
+            shutil.copytree(
+                source,
+                destination / name,
+                dirs_exist_ok=True,
+                ignore=install_ignore(source),
+            )
+    for name in ("requirements.txt", "pyproject.toml", "package.json"):
         source = ROOT / name
         if source.is_file():
             shutil.copy2(source, destination / name)
-    hooks = ROOT / "hooks"
-    if hooks.is_dir():
-        shutil.copytree(hooks, destination / "hooks", dirs_exist_ok=True)
     (destination / ".opencode-seo-root").write_text(
         "OpenCode SEO install root.\n", encoding="utf-8", newline="\n"
     )

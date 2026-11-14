@@ -19,10 +19,30 @@ def test_install_package_copies_generated_target(tmp_path) -> None:
     assert (tmp_path / "plugins" / "opencode-seo" / "package.json").is_file()
     assert (tmp_path / "opencode-seo" / ".opencode-seo-root").is_file()
     assert (tmp_path / "opencode-seo" / "scripts" / "runtime.py").is_file()
+    assert (tmp_path / "opencode-seo" / "hooks" / "validate-schema.py").is_file()
+    assert (tmp_path / "opencode-seo" / "package.json").is_file()
     assert (tmp_path / "commands" / "seo.md").is_file()
     assert (tmp_path / "commands" / "seo" / "audit.md").is_file()
     assert len(list((tmp_path / "skills").glob("*/SKILL.md"))) == 26
     assert len(list((tmp_path / "agents").glob("*.md"))) == 19
+
+
+def test_install_package_skips_claude_only_payload(tmp_path) -> None:
+    installer.install_package(tmp_path, setup=False)
+    runtime = tmp_path / "opencode-seo"
+
+    # AGENTS.md is read from a project or config root, never from a nested
+    # runtime directory, so shipping it only confuses the payload.
+    assert not (runtime / "AGENTS.md").exists()
+    # The Claude hook manifest and its Node bridge are unused by the plugin.
+    assert not (runtime / "hooks" / "hooks.json").exists()
+    assert not (runtime / "hooks" / "run-python-hook.js").exists()
+    # The plugin calls runtime.py directly; launchers stay in the repository.
+    assert not (runtime / "scripts" / "claude-seo").exists()
+    assert not (runtime / "scripts" / "opencode-seo").exists()
+    assert not (runtime / "scripts" / "opencode-seo.ps1").exists()
+    assert not list(runtime.rglob("__pycache__"))
+    assert not list(runtime.rglob("*.pyc"))
 
 
 def test_install_package_does_not_remove_user_skills(tmp_path) -> None:

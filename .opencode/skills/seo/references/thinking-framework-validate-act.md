@@ -70,7 +70,7 @@ The audit is a snapshot, not a verdict. Build the feedback loop:
   Reddit / YouTube).
 - Schedule a re-audit cadence appropriate to the site's velocity
   (weekly for a high-churn ecommerce; quarterly for a B2B SaaS).
-- Surface what claude-seo itself **could not measure** (offline
+- Surface what opencode-seo itself **could not measure** (offline
   conversion, brand lift, customer interviews) so the human closes
   those loops.
 

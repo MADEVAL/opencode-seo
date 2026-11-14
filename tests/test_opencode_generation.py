@@ -204,3 +204,33 @@ def test_image_gen_offers_native_generation_and_keeps_banana() -> None:
     assert "banana" in text.lower(), "banana must remain a supported alternative"
     assert "gemini_generate_image" in text
 
+
+def test_generated_templates_referenced_by_skills_are_present() -> None:
+    assert (OPENCODE / "skills" / "seo-cluster" / "templates" / "cluster-map.html").is_file()
+    assert (
+        OPENCODE / "skills" / "seo-google" / "assets" / "templates" / "cwv-audit-report.md"
+    ).is_file()
+
+
+def test_generated_target_drops_claude_branding() -> None:
+    offences: list[str] = []
+    for path in sorted(OPENCODE.rglob("*")):
+        if not path.is_file() or path.name == "LICENSE.txt" or path.suffix.lower() != ".md":
+            continue
+        if "claude-seo" in path.read_text(encoding="utf-8", errors="ignore"):
+            offences.append(path.relative_to(OPENCODE).as_posix())
+    assert not offences, f"unbranded OpenCode files still mention claude-seo: {offences}"
+
+
+def test_generated_target_has_no_claude_plugin_tokens() -> None:
+    tokens = ("${CLAUDE_PLUGIN_ROOT}", "maxTurns", "Task(", "~/.claude", "allowed-tools")
+    offences: list[str] = []
+    for path in sorted(OPENCODE.rglob("*")):
+        if not path.is_file() or path.suffix.lower() not in {".md", ".ts", ".json"}:
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for token in tokens:
+            if token in text:
+                offences.append(f"{path.relative_to(OPENCODE).as_posix()}: {token}")
+    assert not offences, offences
+

@@ -60,7 +60,7 @@ Opera and Comet agent actions is unverified.
 
 ## Refresh procedure
 
-1. PSI: run `lighthouse_agentic.py https://claude-seo.md/ --json`. If
+1. PSI: run `lighthouse_agentic.py https://example.com/ --json`. If
    `lighthouse_version` changed, diff the category `auditRefs` against
    `references/lighthouse-agentic-category.md`.
 2. Lighthouse source: `npm view lighthouse version`, then read

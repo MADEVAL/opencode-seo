@@ -192,3 +192,11 @@ id_ed25519.*
 # Local scratch and generated decks (never shipped)
 tmp/
 outputs/
+
+# The generated OpenCode target mirrors canonical skill templates and assets.
+# The report patterns above match them by name, so re-include them explicitly;
+# otherwise `build_opencode.py --check` fails on a clean clone because the
+# generated copies can never be committed.
+!.opencode/skills/*/templates/**
+!.opencode/skills/*/assets/templates/**
+!.opencode/skills/*/references/**

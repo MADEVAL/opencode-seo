@@ -67,7 +67,7 @@
 - The **multimodal** search type (Lens, Circle to Search, image uploads; rolling out since 2026-09-24) is a Search Console UI filter with export. No API `type` value for it has been verified; do not pass one.
 - Country codes are **ISO 3166-1 alpha-3** (e.g., `USA`, `GBR`, `DEU`).
 - Pagination: increment `startRow` by `rowLimit` until fewer rows returned.
-- `rowLimit` is per API request. The claude-seo `--limit` option is a total
+- `rowLimit` is per API request. The opencode-seo `--limit` option is a total
   result cap and requests are paged internally at up to 25,000 rows.
 - For accurate site totals, omit `query` and `page` dimensions. Query rows can
   omit anonymized low-volume traffic and must not be summed as site totals.

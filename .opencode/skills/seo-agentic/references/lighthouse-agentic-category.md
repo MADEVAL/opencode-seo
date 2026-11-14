@@ -97,7 +97,7 @@ imperative tools, that also turns `webmcp-schema-validity` from N/A into a
 counted audit, which scores 0.5 (a failure) if any parameter lacks a
 description. Annotate fully or not at all.
 
-Worked example, claude-seo.md on 2026-09-23 (PSI, mobile and desktop): 4
+Worked example, example.com on 2026-09-23 (PSI, mobile and desktop): 4
 imperative tools registered, one form without annotations, no catalog. Result
 **4/4** with 2 informative audits. When a run shows 5/5, form coverage was
 counted, meaning every form on that page carried an annotation (or the

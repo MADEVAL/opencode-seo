@@ -54,7 +54,7 @@ function resolveAssetsRoot(runtimeRoot: string, workspace: string): string {
   // Claude-compatible copy at the runtime root and the generated
   // OpenCode-native copy under `.opencode/`. Reads must prefer the generated
   // copy so `seo({"action": "read"})` never returns Claude-only instructions
-  // such as `${CLAUDE_PLUGIN_ROOT}` launcher commands to an OpenCode agent.
+  // such as plugin-root launcher commands to an OpenCode agent.
   const candidates = [
     path.join(runtimeRoot, ".opencode"),
     runtimeRoot,

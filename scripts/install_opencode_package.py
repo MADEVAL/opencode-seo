@@ -88,15 +88,7 @@ def install_package(
         build_opencode.sync_tree(plugin, target / "plugins" / "opencode-seo")
 
     root.mkdir(parents=True, exist_ok=True)
-    for name in ("scripts", "data", "schema", "hooks"):
-        source = ROOT / name
-        if source.is_dir():
-            shutil.copytree(source, root / name, dirs_exist_ok=True)
-    for name in ("requirements.txt", "pyproject.toml", "package.json", "AGENTS.md"):
-        source = ROOT / name
-        if source.is_file():
-            shutil.copy2(source, root / name)
-    (root / MARKER).write_text("OpenCode SEO install root.\n", encoding="utf-8", newline="\n")
+    build_opencode.copy_install_root(root)
 
     if setup:
         runtime = root / "scripts" / "runtime.py"

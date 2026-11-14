@@ -139,6 +139,14 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     target = Path(args.config_dir).expanduser() if args.config_dir else config_dir()
+    if target.resolve() != (Path.home() / ".config" / "opencode").resolve() and not os.environ.get(
+        "XDG_CONFIG_HOME"
+    ):
+        print(
+            f"Warning: OpenCode reads {Path.home() / '.config' / 'opencode'} by default. "
+            f"Set XDG_CONFIG_HOME so it also reads {target}, otherwise the plugin will not load.",
+            file=sys.stderr,
+        )
     if args.uninstall:
         uninstall_package(target, dry_run=args.dry_run)
         print(f"Removed OpenCode SEO from {target}")

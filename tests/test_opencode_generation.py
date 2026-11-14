@@ -213,9 +213,12 @@ def test_generated_templates_referenced_by_skills_are_present() -> None:
 
 
 def test_generated_target_drops_claude_branding() -> None:
+    text_suffixes = {".md", ".ts", ".json", ".txt", ".html", ".css", ".js", ".svg", ".yml", ".yaml"}
     offences: list[str] = []
     for path in sorted(OPENCODE.rglob("*")):
-        if not path.is_file() or path.name == "LICENSE.txt" or path.suffix.lower() != ".md":
+        if not path.is_file() or path.name == "LICENSE.txt":
+            continue
+        if path.suffix.lower() not in text_suffixes:
             continue
         if "claude-seo" in path.read_text(encoding="utf-8", errors="ignore"):
             offences.append(path.relative_to(OPENCODE).as_posix())

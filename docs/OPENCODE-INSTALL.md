@@ -32,17 +32,27 @@ The installer copies:
   agents/                  # 19 OpenCode agents
   commands/                # /seo and /seo/<sub>
   plugins/opencode-seo/    # local plugin with the seo tool and schema hook
-  opencode-seo/            # Python runtime, scripts, data, schema, hooks
+  opencode-seo/            # Python runtime, scripts, data, schema, hook
 ```
+
+The runtime directory is OpenCode-only: it does not ship `AGENTS.md`, the
+Claude hook manifest, the Node hook bridge, the Claude launchers, or
+`__pycache__`.
 
 It also runs the managed Python setup with `--skip-browser` by default. Use
 `--with-browser` to install Chromium, or `--no-setup` to skip Python setup.
 
-Set `OPENCODE_CONFIG_DIR` to install somewhere else:
+### Install somewhere else
+
+OpenCode always reads `$XDG_CONFIG_HOME/opencode` (or `~/.config/opencode`).
+Point both the installer and OpenCode at the same place:
 
 ```bash
-OPENCODE_CONFIG_DIR=/opt/opencode ./install-opencode.sh --no-setup
+XDG_CONFIG_HOME=/opt OPENCODE_CONFIG_DIR=/opt/opencode ./install-opencode.sh --no-setup
 ```
+
+Setting only `OPENCODE_CONFIG_DIR` writes files that OpenCode never reads, so
+the installer warns when the two disagree.
 
 ## Use
 
@@ -67,17 +77,36 @@ The `seo` tool is available to agents as:
 ## Verify
 
 ```bash
-opencode plugin list
 opencode debug agents
+opencode plugin list
 opencode mcp list
 ```
 
 Expected:
 
-- `opencode-seo` in `opencode plugin list`;
 - 19 `seo-*` agents in `opencode debug agents`;
 - 26 skills under `~/.config/opencode/skills`;
-- `/seo` and `/seo/audit` in the command list.
+- `/seo` and `/seo/audit` in the command list;
+- `opencode-seo` in `opencode plugin list` when you run the command inside a
+  project that has its own `.opencode/`. For a global-only install, the list can
+  print `No plugins found` even though the plugin loads; verify it with
+  `opencode plugin list --print-logs --log-level debug` and look for
+  `loading plugin ... /plugins/opencode-seo`. This is an OpenCode listing quirk,
+  not a failed install.
+
+If the `seo` tool is missing after an install into a running OpenCode, reload
+the configuration:
+
+```bash
+opencode reload
+```
+
+If it still does not appear, restart the background service and reopen the
+session:
+
+```bash
+opencode service restart
+```
 
 If `seo` reports that setup is required:
 
@@ -107,6 +136,11 @@ project or global settings only when you need to override defaults:
   ]
 }
 ```
+
+The installer never writes this file. Your global `opencode.json(c)` may already
+contain providers, MCP servers, and permissions, so overwriting it would break
+an existing setup. Merge the keys above by hand when you need them; the plugin
+works with the defaults.
 
 Do not add `skills: ["./skills"]` to a repository that also keeps the canonical
 Claude skills. An explicit source outranks `.opencode/skills` and would load the

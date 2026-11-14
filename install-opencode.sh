@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Install OpenCode SEO into the native OpenCode config directory.
-# Usage: ./install-opencode.sh [--skip-browser] [--no-setup] [--dry-run]
+# Usage: ./install-opencode.sh [--playwright] [--with-browser] [--no-setup] [--dry-run]
 
 script_dir="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 installer="${script_dir}/scripts/install_opencode_package.py"

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Shared headless renderer for claude-seo.
+Shared headless renderer for OpenCode SEO.
 
 Every subagent that fetches HTML for analysis (technical, content, schema,
 geo, local, ecommerce, hreflang, images) calls this module instead of
 ``fetch_page.py`` whenever JS execution might change what an audit can see.
-Built on Playwright Chromium with trafilatura for boilerplate-free content
-extraction and htmldate for publication-date detection.
+Uses a Playwright Chromium when one is available, with installed Chrome or Edge
+as a no-download fallback, trafilatura for boilerplate-free content extraction
+and htmldate for publication-date detection.
 
 Why
 ===
@@ -24,6 +25,14 @@ Modes
                (see ``_is_spa``). Default. Cheapest correct behaviour.
 - ``always`` : always render with Playwright, even for static HTML.
 - ``never``  : raw HTML only. Equivalent to legacy ``fetch_page.py``.
+
+Backends
+========
+``--backend`` or ``OPENCODE_SEO_RENDER`` selects the renderer. ``auto`` tries
+managed Chromium, then the system Playwright cache, then an installed Chrome or
+Edge channel, then the Chrome CLI, then static raw HTML. The channel backend is
+the practical default when Playwright is installed but its managed browser was
+skipped: it downloads nothing and keeps the CDP accessibility tree.
 
 Result shape
 ============
@@ -43,7 +52,9 @@ A dict with::
     redirect_chain    list of {url, status_code}
     console_errors    list of browser console error strings
     render_diagnostics list of non-fatal render degradation messages
-    render_engine     'playwright-chromium' or None
+    render_engine     'playwright-chromium', 'chrome-cli', or None
+    render_backend    the backend that rendered: managed, system, channel,
+                      cli, static, or None when no render was attempted
     render_ms         elapsed wall-clock for the render step
     mode_used         'rendered' or 'raw'
     too_large         True when the raw body hit the size cap (MAX_PAGE_BYTES)
@@ -135,7 +146,15 @@ except ImportError:  # pragma: no cover
 _SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
+from render_backend import (  # noqa: E402  (sys.path massage above is intentional)
+    BACKENDS,
+    launch_playwright,
+    normalize_backend,
+    plan_backends,
+    run_cli_render,
+)
 from url_safety import (  # noqa: E402  (sys.path massage above is intentional)
+    DEFAULT_USER_AGENT,
     MAX_PAGE_BYTES,
     URLSafetyError,
     decode_body,
@@ -153,10 +172,7 @@ VIEWPORTS: dict[str, dict[str, int]] = {
     "mobile": {"width": 375, "height": 812, "device_scale": 2},
 }
 
-USER_AGENT = (
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/150.0.7871.115 Safari/537.36 ClaudeSEO/2.0"
-)
+USER_AGENT = DEFAULT_USER_AGENT
 
 # Hydration-shell signatures. A marker is actionable only while meaningful
 # body text is sparse, because SSR/SSG framework pages legitimately retain
@@ -676,6 +692,7 @@ def render_page(
     extract_content: bool = True,
     extract_accessibility: bool = False,
     user_agent: Optional[str] = None,
+    backend: Optional[str] = None,
 ) -> dict:
     """Render or fetch ``url`` per the chosen mode. See module docstring.
 
@@ -701,6 +718,7 @@ def render_page(
         "console_errors": [],
         "render_diagnostics": [],
         "render_engine": None,
+        "render_backend": None,
         "render_ms": None,
         "mode_used": None,
         "too_large": False,
@@ -713,6 +731,11 @@ def render_page(
         return result
     if viewport not in VIEWPORTS:
         result["error"] = f"Invalid viewport: {viewport!r}"
+        return result
+    try:
+        backend_requested = normalize_backend(backend)
+    except ValueError as exc:
+        result["error"] = str(exc)
         return result
 
     # Pre-flight SSRF check.
@@ -750,6 +773,24 @@ def render_page(
 
     result["is_spa"] = _is_spa(result["raw_content"])
     should_render = mode == "always" or (mode == "auto" and result["is_spa"])
+    plan = plan_backends(backend_requested) if should_render else []
+
+    if should_render and plan == ["static"]:
+        if mode == "always":
+            result["error"] = (
+                "no render backend is available. Install Chrome or Edge, install "
+                "Playwright and Chromium, or set OPENCODE_SEO_RENDER=cli."
+            )
+            result["render_backend"] = "static"
+            result["url"] = final_raw_url
+            result["status_code"] = raw_status
+            result["headers"] = raw_headers
+            result["raw_fallback_available"] = True
+            return result
+        should_render = False
+        result["render_diagnostics"].append(
+            "no render backend is available; kept the raw HTML"
+        )
 
     if not should_render:
         result["mode_used"] = "raw"
@@ -757,6 +798,7 @@ def render_page(
         result["status_code"] = raw_status
         result["headers"] = raw_headers
         result["content"] = result["raw_content"]
+        result["render_backend"] = "static" if plan == ["static"] else None
     else:
         result["mode_used"] = "rendered"
 
@@ -768,95 +810,146 @@ def render_page(
             result["headers"] = raw_headers
             result["raw_fallback_available"] = True
 
-        if sync_playwright is None:
-            result["error"] = (
-                "playwright is required for rendered mode. "
-                "Install: pip install -r requirements.txt "
-                "&& playwright install chromium"
-            )
-            _keep_raw_on_render_failure()
-            return result
-
         vp = VIEWPORTS[viewport]
         blocked = set(block_resources or [])
         route_handler = make_safe_playwright_route_handler(blocked)
         start = time.monotonic()
+        errors: list[str] = []
+        rendered = False
 
         try:
-            with sync_playwright() as p:
-                browser = p.chromium.launch(headless=True)
-                context = new_guarded_context(
-                    browser,
-                    route_handler,
-                    viewport={"width": vp["width"], "height": vp["height"]},
-                    device_scale_factor=vp["device_scale"],
-                    user_agent=user_agent or USER_AGENT,
-                )
-                page = context.new_page()
-
-                def _on_console(msg):  # type: ignore[no-untyped-def]
-                    if msg.type == "error":
-                        result["console_errors"].append(msg.text)
-
-                page.on("console", _on_console)
-                page.route("**/*", route_handler)
-
-                try:
-                    response = page.goto(
-                        norm_url, wait_until="domcontentloaded", timeout=timeout_ms
-                    )
-                except PlaywrightTimeout:
-                    response = None
-                    result["render_diagnostics"].append(
-                        f"DOMContentLoaded timed out after {timeout_ms}ms; "
-                        "captured the available DOM"
-                    )
-                if not _wait_for_dom_stability(page, timeout_ms):
-                    result["render_diagnostics"].append(
-                        "DOM did not reach the bounded stability threshold; "
-                        "captured the available DOM"
-                    )
-
-                result["url"] = page.url
-                result["content"] = page.content()
-                result["status_code"] = response.status if response else raw_status
-                result["headers"] = (
-                    dict(response.all_headers()) if response else raw_headers
-                )
-                result["render_engine"] = "playwright-chromium"
-
-                if extract_accessibility:
+            for candidate in plan:
+                if candidate == "cli":
                     try:
-                        (
-                            result["accessibility_tree"],
-                            result["accessibility_partial"],
-                        ) = _capture_accessibility_tree(context, page)
-                        if result["accessibility_tree"] is None:
-                            result["accessibility_partial"] = True
-                            result["accessibility_error"] = (
-                                "Chromium returned no accessibility nodes"
-                            )
-                        elif result["accessibility_partial"]:
-                            result["accessibility_error"] = (
-                                "accessibility tree exceeded the capture bounds"
-                            )
-                    except Exception as exc:
-                        result["accessibility_tree"] = None
-                        result["accessibility_partial"] = True
-                        result["accessibility_error"] = (
-                            f"accessibility capture failed: {type(exc).__name__}: {exc}"
+                        result["content"] = run_cli_render(
+                            norm_url, timeout_ms=timeout_ms
+                        )
+                        result["url"] = final_raw_url
+                        result["status_code"] = raw_status
+                        result["headers"] = raw_headers
+                        result["render_engine"] = "chrome-cli"
+                        result["render_backend"] = "cli"
+                        result["render_diagnostics"].append(
+                            "the Chrome CLI backend cannot block subresources that "
+                            "resolve to private addresses"
                         )
                         result["render_diagnostics"].append(
-                            result["accessibility_error"]
+                            "the Chrome CLI backend does not capture console errors"
                         )
+                        if extract_accessibility:
+                            result["accessibility_partial"] = True
+                            result["accessibility_error"] = (
+                                "the Chrome CLI backend does not expose an accessibility tree"
+                            )
+                            result["render_diagnostics"].append(
+                                result["accessibility_error"]
+                            )
+                        rendered = True
+                        break
+                    except Exception as exc:
+                        errors.append(f"cli: {exc}")
+                        result["render_diagnostics"].append(
+                            f"cli backend failed: {type(exc).__name__}: {exc}"
+                        )
+                    continue
 
-                browser.close()
-        except Exception as exc:
-            result["error"] = f"playwright error: {exc}"
-            _keep_raw_on_render_failure()
-            return result
+                if sync_playwright is None:
+                    errors.append(f"{candidate}: playwright is not installed")
+                    result["render_diagnostics"].append(
+                        f"{candidate} backend skipped: playwright is not installed"
+                    )
+                    continue
+
+                try:
+                    with sync_playwright() as p:
+                        browser = launch_playwright(p, candidate, headless=True)
+                        context = new_guarded_context(
+                            browser,
+                            route_handler,
+                            viewport={"width": vp["width"], "height": vp["height"]},
+                            device_scale_factor=vp["device_scale"],
+                            user_agent=user_agent or USER_AGENT,
+                        )
+                        page = context.new_page()
+
+                        def _on_console(msg):  # type: ignore[no-untyped-def]
+                            if msg.type == "error":
+                                result["console_errors"].append(msg.text)
+
+                        page.on("console", _on_console)
+                        page.route("**/*", route_handler)
+
+                        try:
+                            response = page.goto(
+                                norm_url,
+                                wait_until="domcontentloaded",
+                                timeout=timeout_ms,
+                            )
+                        except PlaywrightTimeout:
+                            response = None
+                            result["render_diagnostics"].append(
+                                f"DOMContentLoaded timed out after {timeout_ms}ms; "
+                                "captured the available DOM"
+                            )
+                        if not _wait_for_dom_stability(page, timeout_ms):
+                            result["render_diagnostics"].append(
+                                "DOM did not reach the bounded stability threshold; "
+                                "captured the available DOM"
+                            )
+
+                        result["url"] = page.url
+                        result["content"] = page.content()
+                        result["status_code"] = (
+                            response.status if response else raw_status
+                        )
+                        result["headers"] = (
+                            dict(response.all_headers()) if response else raw_headers
+                        )
+                        result["render_engine"] = "playwright-chromium"
+
+                        if extract_accessibility:
+                            try:
+                                (
+                                    result["accessibility_tree"],
+                                    result["accessibility_partial"],
+                                ) = _capture_accessibility_tree(context, page)
+                                if result["accessibility_tree"] is None:
+                                    result["accessibility_partial"] = True
+                                    result["accessibility_error"] = (
+                                        "Chromium returned no accessibility nodes"
+                                    )
+                                elif result["accessibility_partial"]:
+                                    result["accessibility_error"] = (
+                                        "accessibility tree exceeded the capture bounds"
+                                    )
+                            except Exception as exc:
+                                result["accessibility_tree"] = None
+                                result["accessibility_partial"] = True
+                                result["accessibility_error"] = (
+                                    f"accessibility capture failed: "
+                                    f"{type(exc).__name__}: {exc}"
+                                )
+                                result["render_diagnostics"].append(
+                                    result["accessibility_error"]
+                                )
+
+                        browser.close()
+                    result["render_backend"] = candidate
+                    rendered = True
+                    break
+                except Exception as exc:
+                    errors.append(f"{candidate}: {exc}")
+                    result["render_diagnostics"].append(
+                        f"{candidate} backend failed: {type(exc).__name__}: {exc}"
+                    )
         finally:
             result["render_ms"] = (time.monotonic() - start) * 1000.0
+
+        if not rendered:
+            detail = "; ".join(errors) if errors else "no candidate started"
+            result["error"] = f"render backend failed: {detail}"
+            _keep_raw_on_render_failure()
+            return result
 
         # Both versions exist: measure what only JavaScript provides.
         try:
@@ -935,9 +1028,15 @@ def _json_summary(result: dict, *, max_text: int = 0) -> dict:
 
 def _cli() -> None:
     parser = argparse.ArgumentParser(
-        description="claude-seo shared headless renderer (Playwright + trafilatura)"
+        description="OpenCode SEO shared headless renderer (Playwright + trafilatura)"
     )
     parser.add_argument("url", help="URL to render")
+    parser.add_argument(
+        "--backend",
+        choices=BACKENDS,
+        help="render backend: managed, system, channel, cli or static "
+             "(default: auto, or OPENCODE_SEO_RENDER)",
+    )
     parser.add_argument(
         "--mode",
         choices=("auto", "always", "never"),
@@ -1004,6 +1103,7 @@ def _cli() -> None:
         block_resources=args.block or None,
         extract_content=not args.no_extract,
         extract_accessibility=args.a11y_tree,
+        backend=args.backend,
     )
 
     full_content = res.get("content") or res.get("raw_content") or ""

@@ -8,12 +8,14 @@ import os
 import re
 import signal
 import subprocess
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
 SPEC = importlib.util.spec_from_file_location("claude_seo_runtime", ROOT / "scripts/runtime.py")
 assert SPEC and SPEC.loader
 runtime = importlib.util.module_from_spec(SPEC)
@@ -89,6 +91,11 @@ def test_doctor_json_omits_paths_and_environment_values(
     root = _fixture_root(tmp_path)
     sensitive_path = tmp_path / "person-name" / "private"
     monkeypatch.setattr(runtime, "_root", lambda: root)
+    monkeypatch.setattr(
+        runtime,
+        "_probe_render",
+        lambda _status: {"backend": "static", "degraded": True, "available": {}},
+    )
     monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(sensitive_path))
     rc = runtime.command_doctor(SimpleNamespace(json=True))
     output = capsys.readouterr().out
@@ -96,7 +103,8 @@ def test_doctor_json_omits_paths_and_environment_values(
     assert rc == 3
     assert str(sensitive_path) not in output
     assert set(payload) == {
-        "browser_ready", "mode", "plugin_version", "python_version", "ready", "reasons"
+        "browser_ready", "degraded", "mode", "plugin_version", "python_version",
+        "ready", "reasons", "render_backend",
     }
 
 
@@ -104,7 +112,26 @@ def test_child_environment_forces_utf8_and_persistent_browser_path(tmp_path: Pat
     env = runtime._safe_env({"data_dir": tmp_path})
     assert env["PYTHONUTF8"] == "1"
     assert env["PYTHONIOENCODING"] == "utf-8"
-    assert env["PLAYWRIGHT_BROWSERS_PATH"] == str(tmp_path / "ms-playwright")
+    assert env["PYTHONDONTWRITEBYTECODE"] == "1"
+    assert env["OPENCODE_SEO_BROWSERS_PATH"] == str(tmp_path / "ms-playwright")
+    # An empty managed directory must not shadow the system browser cache.
+    assert "PLAYWRIGHT_BROWSERS_PATH" not in env
+
+
+def test_child_environment_uses_managed_browser_path_when_it_has_chromium(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import render_backend
+
+    managed = tmp_path / "ms-playwright"
+    managed.mkdir()
+    monkeypatch.setattr(
+        render_backend,
+        "has_chromium",
+        lambda path: path is not None and Path(path) == managed,
+    )
+    env = runtime._safe_env({"data_dir": tmp_path})
+    assert env["PLAYWRIGHT_BROWSERS_PATH"] == str(managed)
 
 
 def test_configured_data_dir_rejects_filesystem_root_and_user_home(
@@ -145,16 +172,28 @@ def test_error_redaction_hides_credentials_and_tokens() -> None:
 
 
 def test_browser_marker_requires_browser_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import render_backend
+
     root = _fixture_root(tmp_path)
     data = tmp_path / "data"
     python = data / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     python.parent.mkdir(parents=True)
     python.write_text("", encoding="utf-8")
     monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(data))
+    monkeypatch.setattr(render_backend, "system_browsers_dir", lambda: tmp_path / "system-empty")
+    monkeypatch.setattr(render_backend, "channel_candidates", lambda: ())
+    monkeypatch.setattr(render_backend, "cli_executable", lambda: None)
+    monkeypatch.setattr(runtime, "_venv_has_package", lambda _venv, name: name == "playwright")
+    monkeypatch.setattr(
+        render_backend,
+        "has_chromium",
+        lambda path: path is not None and (Path(path) / "chromium-123").is_dir(),
+    )
     expected = runtime._expected(root)
     (data / "runtime-state.json").write_text(
         json.dumps({**expected, "browser_ready": True}), encoding="utf-8"
     )
+    # The state flag is not evidence: the directory has to hold a browser.
     assert runtime._status(root)["browser_ready"] is False
     (data / "ms-playwright" / "chromium-123").mkdir(parents=True)
     assert runtime._status(root)["browser_ready"] is True
@@ -424,6 +463,11 @@ def test_browser_setup_warning_is_redacted(
         return subprocess.CompletedProcess(argv, 0, "", "")
 
     monkeypatch.setattr(runtime, "_run_checked", fake_checked)
+    monkeypatch.setattr(
+        runtime,
+        "_render_status",
+        lambda _status: {"backend": "static", "degraded": True, "available": {}},
+    )
     rc = runtime.command_setup(SimpleNamespace(skip_browser=False))
     assert rc == 10
     captured = capsys.readouterr()

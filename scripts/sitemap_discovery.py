@@ -58,7 +58,13 @@ _SCRIPTS = os.path.dirname(os.path.abspath(__file__))
 if _SCRIPTS not in sys.path:
     sys.path.insert(0, _SCRIPTS)
 
-from url_safety import URLSafetyError, read_bounded, safe_requests_session, validate_url  # noqa: E402
+from url_safety import (  # noqa: E402
+    PRODUCT_USER_AGENT,
+    URLSafetyError,
+    read_bounded,
+    safe_requests_session,
+    validate_url,
+)
 
 COMMON_PATHS = (
     "/sitemap.xml",
@@ -77,7 +83,7 @@ DEFAULT_SAMPLE = 20
 MAX_EXAMPLES = 5
 # Distinct URLs remembered for duplicate detection (about 100 bytes each).
 MAX_TRACKED_URLS = 2_000_000
-USER_AGENT = "ClaudeSEO/2.2 SitemapDiscovery"
+USER_AGENT = f"{PRODUCT_USER_AGENT} SitemapDiscovery"
 _SITEMAP_LINE = re.compile(r"^\s*sitemap\s*:\s*(\S+)\s*$", re.IGNORECASE)
 _TOO_LARGE = "Sitemap exceeds the 50 MiB uncompressed protocol limit"
 _GZIP_MAGIC = b"\x1f\x8b"

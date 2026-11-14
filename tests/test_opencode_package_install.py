@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -43,6 +44,22 @@ def test_install_package_skips_claude_only_payload(tmp_path) -> None:
     assert not (runtime / "scripts" / "opencode-seo.ps1").exists()
     assert not list(runtime.rglob("__pycache__"))
     assert not list(runtime.rglob("*.pyc"))
+
+
+def test_install_package_forwards_render_flags(tmp_path, monkeypatch) -> None:
+    seen: list[list[str]] = []
+
+    def fake_run(command, cwd=None, check=False):
+        seen.append(command)
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(installer.subprocess, "run", fake_run)
+    installer.install_package(tmp_path, with_playwright=True)
+    assert seen[-1][-1] == "--playwright"
+    installer.install_package(tmp_path)
+    assert seen[-1][-1] == "--skip-browser"
+    installer.install_package(tmp_path, with_browser=True)
+    assert seen[-1][-1] == "setup"
 
 
 def test_install_package_does_not_remove_user_skills(tmp_path) -> None:

@@ -36,6 +36,7 @@ if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
 
 from url_safety import (  # noqa: E402  (path bootstrap must run first)
+    PRODUCT_USER_AGENT,
     URLSafetyError,
     is_safe_ip,
     safe_requests_session,
@@ -56,7 +57,7 @@ except ImportError as _import_exc:  # pragma: no cover - hard dependency
 
 CONFIG_PATH = str(seo_paths.config_file("matomo.json"))
 DEFAULT_TIMEOUT = 15
-USER_AGENT = "OpenCodeSEO/3.0.0"
+USER_AGENT = PRODUCT_USER_AGENT
 LOCAL_TARGETS_ENV = "CLAUDE_SEO_LOCAL_TARGETS"
 
 _SECRET_RE = re.compile(r"(token_auth|token|password)=[^\s&\"']+", re.IGNORECASE)

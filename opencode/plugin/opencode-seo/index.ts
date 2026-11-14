@@ -227,6 +227,7 @@ function runProcess(
         ...options.env,
         PYTHONUTF8: "1",
         PYTHONIOENCODING: "utf-8",
+        PYTHONDONTWRITEBYTECODE: "1",
       },
     })
 

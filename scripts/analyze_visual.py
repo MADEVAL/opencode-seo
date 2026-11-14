@@ -16,12 +16,19 @@ try:
     from playwright.sync_api import TimeoutError as PlaywrightTimeout
     from playwright.sync_api import sync_playwright
 except ImportError:
-    print("Error: playwright required. Install with: pip install playwright && playwright install chromium")
-    sys.exit(1)
+    # Playwright is an optional render extra.
+    sync_playwright = None
+    PlaywrightTimeout = Exception  # type: ignore[assignment,misc]
 
 _SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
+from render_backend import (  # noqa: E402
+    BACKENDS,
+    launch_playwright,
+    normalize_backend,
+    plan_backends,
+)
 from url_safety import (  # noqa: E402  (sys.path massage above is intentional)
     URLSafetyError,
     make_safe_playwright_route_handler,
@@ -45,13 +52,14 @@ def normalize_url(url: str) -> tuple[str, ParseResult]:
     return url, parsed
 
 
-def analyze_visual(url: str, timeout: int = 30000) -> dict:
+def analyze_visual(url: str, timeout: int = 30000, backend: str | None = None) -> dict:
     """
     Analyze visual aspects of a web page.
 
     Args:
         url: URL to analyze
         timeout: Page load timeout in milliseconds
+        backend: Playwright browser backend: auto, managed, system or channel.
 
     Returns:
         Dictionary with visual analysis results
@@ -77,6 +85,7 @@ def analyze_visual(url: str, timeout: int = 30000) -> dict:
             "readable": True,
         },
         "error": None,
+        "render_backend": None,
     }
 
     try:
@@ -93,11 +102,46 @@ def analyze_visual(url: str, timeout: int = 30000) -> dict:
         result["error"] = f"url_safety: {e}"
         return result
 
+    try:
+        requested_backend = normalize_backend(backend)
+    except ValueError as exc:
+        result["error"] = str(exc)
+        return result
+    plan = [
+        item
+        for item in plan_backends(requested_backend)
+        if item in ("managed", "system", "channel")
+    ]
+    if not plan:
+        result["error"] = (
+            "no Playwright browser backend is available. Install Playwright and "
+            "Chromium, install Chrome or Edge, or run setup with --with-browser."
+        )
+        return result
+    if sync_playwright is None:
+        result["error"] = (
+            "playwright is required for visual analysis. Install the render extra: "
+            "pip install -e \".[render]\""
+        )
+        return result
+
     route_handler = make_safe_playwright_route_handler()
 
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            browser = None
+            launch_errors: list[str] = []
+            for candidate in plan:
+                try:
+                    browser = launch_playwright(p, candidate, headless=True)
+                    result["render_backend"] = candidate
+                    break
+                except Exception as exc:
+                    launch_errors.append(f"{candidate}: {exc}")
+            if browser is None:
+                raise RuntimeError(
+                    "no browser backend started: " + "; ".join(launch_errors)
+                )
 
             # Desktop analysis
             desktop = new_guarded_context(browser, route_handler, viewport={"width": 1920, "height": 1080})
@@ -196,10 +240,15 @@ def main():
     parser.add_argument("url", help="URL to analyze")
     parser.add_argument("--timeout", "-t", type=int, default=30000, help="Timeout in ms")
     parser.add_argument("--json", "-j", action="store_true", help="Output as JSON")
+    parser.add_argument(
+        "--backend",
+        choices=[name for name in BACKENDS if name in ("auto", "managed", "system", "channel")],
+        help="Playwright browser backend (default: auto, or OPENCODE_SEO_RENDER)",
+    )
 
     args = parser.parse_args()
 
-    result = analyze_visual(args.url, timeout=args.timeout)
+    result = analyze_visual(args.url, timeout=args.timeout, backend=args.backend)
 
     if args.json:
         print(json.dumps(result, indent=2))

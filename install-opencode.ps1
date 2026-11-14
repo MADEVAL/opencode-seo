@@ -1,5 +1,5 @@
 # Install OpenCode SEO into the native OpenCode config directory.
-# Usage: .\install-opencode.ps1 [--skip-browser] [--no-setup] [--dry-run]
+# Usage: .\install-opencode.ps1 [--playwright] [--with-browser] [--no-setup] [--dry-run]
 
 $ErrorActionPreference = "Stop"
 

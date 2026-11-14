@@ -395,6 +395,7 @@ def _render_with_fake_browser(page, *, extract_accessibility=False):
     spa_html = '<html><body><div id="root"></div></body></html>'
     with patch.object(render_page, "validate_url_strict", side_effect=_mock_validate_strict), \
          patch.object(render_page, "safe_requests_get", return_value=_fake_response(spa_html)), \
+         patch.object(render_page, "plan_backends", lambda *_args, **_kwargs: ["system"]), \
          patch.object(render_page, "sync_playwright", lambda: _FakePlaywrightManager(page)):
         return render_page.render_page(
             "https://app.example/",
@@ -490,26 +491,30 @@ def test_render_page_never_mode_skips_render_even_for_spa_shell() -> None:
 
 
 def test_render_page_always_mode_errors_when_playwright_missing() -> None:
-    """When Playwright is uninstalled, always-mode returns a clear error."""
+    """When no render backend is available, always-mode returns a clear error."""
     rich_html = "<html><body>" + ("a" * 1000) + "</body></html>"
     with patch.object(render_page, "validate_url_strict", side_effect=_mock_validate_strict), \
          patch.object(render_page, "safe_requests_get",
                       return_value=_fake_response(rich_html)), \
+         patch.object(render_page, "plan_backends", lambda *_args, **_kwargs: ["static"]), \
          patch.object(render_page, "sync_playwright", None):
         result = render_page.render_page("https://x.example/", mode="always")
     assert result["error"] is not None
     assert "playwright" in result["error"].lower()
 
 
-def test_render_page_auto_errors_for_spa_when_playwright_missing() -> None:
+def test_render_page_auto_falls_back_to_raw_when_no_backend_is_available() -> None:
     spa_html = '<html><body><div id="__next"></div></body></html>'
     with patch.object(render_page, "validate_url_strict", side_effect=_mock_validate_strict), \
          patch.object(render_page, "safe_requests_get",
                       return_value=_fake_response(spa_html)), \
+         patch.object(render_page, "plan_backends", lambda *_args, **_kwargs: ["static"]), \
          patch.object(render_page, "sync_playwright", None):
         result = render_page.render_page("https://app.example/", mode="auto")
-    assert result["error"] is not None
-    assert "playwright" in result["error"].lower()
+    assert result["error"] is None
+    assert result["mode_used"] == "raw"
+    assert result["render_backend"] == "static"
+    assert any("kept the raw HTML" in item for item in result["render_diagnostics"])
 
 
 def test_render_page_raw_fetch_failure_surfaces_clean_error() -> None:
@@ -575,6 +580,7 @@ def test_render_page_result_dict_has_all_documented_fields() -> None:
         "extracted_text", "publication_date", "accessibility_tree",
         "accessibility_error", "accessibility_partial",
         "headers", "redirect_chain", "console_errors", "render_engine",
+        "render_backend",
         "render_diagnostics", "render_ms", "mode_used", "too_large", "js_gap",
         "error",
     }
@@ -625,6 +631,7 @@ def test_js_gap_stays_null_when_the_render_fails() -> None:
     with patch.object(render_page, "validate_url_strict", side_effect=_mock_validate_strict), \
          patch.object(render_page, "safe_requests_get",
                       return_value=_fake_response(spa_html)), \
+         patch.object(render_page, "plan_backends", lambda *_args, **_kwargs: ["system"]), \
          patch.object(render_page, "sync_playwright", None):
         result = render_page.render_page("https://app.example/", mode="auto")
     assert result["error"] is not None

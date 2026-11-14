@@ -507,11 +507,11 @@ def audit_robots(root: str) -> tuple[list, dict]:
 #   error  the one part the proposal requires is missing ("An H1 with the name
 #          of the project or site. This is the only required section")
 #   warn   the line departs from the proposed format, so a parser may misread it
-#   info   an optional part, the proposal's writing guidance, or a claude-seo
+#   info   an optional part, the proposal's writing guidance, or an OpenCode SEO
 #          heuristic
 LLMS_FORMAT_BASIS = ("llmstxt.org community proposal (v2), not a ratified standard. "
                      "Format hygiene only: no note is a ranking or citation factor.")
-LLMS_REVIEW_BYTES = 100 * 1024  # claude-seo review threshold, not a limit in the proposal
+LLMS_REVIEW_BYTES = 100 * 1024  # OpenCode SEO review threshold, not a limit in the proposal
 LLMS_NOTES_PER_ID = 5
 LLMS_FORMAT_RULES = {
     "missing-h1-title": ("error", "The file does not start with an H1 holding the project or "
@@ -547,10 +547,10 @@ LLMS_FORMAT_RULES = {
                      "sections), but links are how agents reach the detail."),
     "links-without-notes": ("info", "Most links have no notes. The proposal's guidance: 'When "
                             "linking to resources, include brief, informative descriptions.'"),
-    "oversize": ("info", "Over 100 KB (a claude-seo review threshold). The proposal says the "
+    "oversize": ("info", "Over 100 KB (an OpenCode SEO review threshold). The proposal says the "
                  "file 'stays small enough to fit in context', with the detail behind links."),
     "content-type": ("info", "Not served as text/plain or text/markdown. The proposal names no "
-                     "content type; this is a claude-seo heuristic."),
+                     "content type; this is an OpenCode SEO heuristic."),
 }
 _LLMS_ITEM = re.compile(r"^-\s*\[(?P<title>[^\]]+)\]\((?P<url><[^>\n]+>|(?:[^()\s<]|\([^()\s]*\))+)"
                         r"(?:\s+\"[^\"]*\")?\)(?P<rest>.*)$")
@@ -1248,7 +1248,7 @@ def audit_ua_matrix(url: str) -> tuple[list, dict]:
 
 def audit_not_found(root: str) -> tuple[list, dict]:
     """Does an unknown URL return a real 404? Catch-all 200s break discovery files."""
-    probe = f"{root}/claude-seo-404-probe-{os.urandom(4).hex()}"
+    probe = f"{root}/opencode-seo-404-probe-{os.urandom(4).hex()}"
     rec = fetch(probe)
     data = {"probe_url": probe, "status": rec["status"], "content_type": _ctype(rec)}
     catch_all = rec["status"] == 200

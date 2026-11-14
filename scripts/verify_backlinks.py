@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Backlink verification crawler for Claude SEO.
+Backlink verification crawler for OpenCode SEO.
 
 Verifies whether known backlinks still exist by fetching source pages and
 checking if the target URL appears in their outbound links. Uses HTTP HEAD
@@ -50,7 +50,7 @@ try:
     from fetch_page import fetch_page
     from google_auth import validate_url
     from parse_html import parse_html
-    from url_safety import URLSafetyError, safe_requests_head
+    from url_safety import PRODUCT_USER_AGENT, URLSafetyError, safe_requests_head
 except ImportError as e:
     print(f"Error: Required scripts not found in scripts/: {e}", file=sys.stderr)
     sys.exit(1)
@@ -82,7 +82,7 @@ def _head_check(url: str, timeout: int = 15) -> dict:
             url,
             timeout=timeout,
             allow_redirects=True,
-            headers={"User-Agent": "ClaudeSEO/1.8.0 BacklinkVerifier"},
+            headers={"User-Agent": f"{PRODUCT_USER_AGENT} BacklinkVerifier"},
         )
         return {
             "status_code": resp.status_code,
@@ -410,7 +410,7 @@ def verify_backlinks(target_url: str, links: list, head_only: bool = False,
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Backlink verification crawler for Claude SEO"
+        description="Backlink verification crawler for OpenCode SEO"
     )
     parser.add_argument(
         "--target",

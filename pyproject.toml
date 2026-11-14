@@ -1,18 +1,26 @@
 [project]
-name = "claude-seo"
+name = "opencode-seo"
 version = "3.0.0"
 description = "OpenCode SEO: comprehensive SEO analysis for OpenCode, Claude Code, and other agent harnesses"
 requires-python = ">=3.11"
 license = "MIT"
 readme = "README.md"
 authors = [
-  {name = "Daniel Agrici"}
+  {name = "MADEVAL"}
 ]
-keywords = ["seo", "claude-code", "ai-tools", "schema-markup", "e-e-a-t", "geo"]
+keywords = ["seo", "opencode", "ai-tools", "schema-markup", "e-e-a-t", "geo"]
 
 [project.urls]
-Homepage = "https://github.com/AgriciDaniel/claude-seo"
-Repository = "https://github.com/AgriciDaniel/claude-seo"
+Homepage = "https://github.com/MADEVAL/opencode-seo"
+Repository = "https://github.com/MADEVAL/opencode-seo"
+
+[project.optional-dependencies]
+# Managed headless rendering. Install with: pip install -e ".[render]"
+# The base runtime uses an installed Chrome or Edge through Playwright channels
+# and needs no browser download.
+render = [
+  "playwright>=1.63.0,<2.0.0",
+]
 
 [tool.ruff]
 target-version = "py311"

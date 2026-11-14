@@ -289,6 +289,7 @@ python scripts/build_opencode.py --check
 - [Commands](docs/COMMANDS.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Community integrations](docs/COMMUNITY-INTEGRATIONS.md)
 - [Port plan and verification](docs/OPENCODE-PORT-PLAN.md)
 - [Security](SECURITY.md)
 - [Privacy](PRIVACY.md)

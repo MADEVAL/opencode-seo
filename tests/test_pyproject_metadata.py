@@ -10,11 +10,22 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 def test_pyproject_has_authors_and_keywords() -> None:
     text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'name = "opencode-seo"' in text
     assert 'authors = [' in text
-    assert 'name = "Daniel Agrici"' in text
+    assert 'name = "MADEVAL"' in text
     assert "email =" not in text
-    for keyword in ("seo", "claude-code", "schema-markup", "e-e-a-t", "geo"):
+    for keyword in ("seo", "opencode", "schema-markup", "e-e-a-t", "geo"):
         assert f'"{keyword}"' in text
+    assert "github.com/MADEVAL/opencode-seo" in text
+
+
+def test_pyproject_keeps_playwright_in_the_render_extra() -> None:
+    text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert "[project.optional-dependencies]" in text
+    assert "render = [" in text
+    assert '"playwright>=1.63.0,<2.0.0"' in text
+    requirements = (REPO_ROOT / "requirements.txt").read_text(encoding="utf-8")
+    assert "playwright" not in requirements
 
 
 def test_pyproject_has_minimal_ruff_config_only() -> None:
@@ -39,7 +50,6 @@ def test_requirements_keep_security_and_compatibility_floors() -> None:
     minimums = {
         "lxml": (6, 1, 3),
         "lxml_html_clean": (0, 4, 5),   # advisories fixed in 0.4.4 and 0.4.5
-        "playwright": (1, 63, 0),
         "urllib3": (2, 8, 0),           # three advisories fixed only in 2.8.0
         "numpy": (2, 2, 6),
         "pillow": (13, 0, 0),           # 28 advisories fixed only in 13.0.0

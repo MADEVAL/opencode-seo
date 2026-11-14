@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cross-platform runtime for Claude SEO's bundled Python scripts.
+"""Cross-platform runtime for OpenCode SEO's bundled Python scripts.
 
 This module deliberately uses only the Python standard library. It is launched
 by the sibling ``scripts/claude-seo`` launcher under a base Python, then
@@ -23,6 +23,11 @@ import time
 from pathlib import Path
 from typing import Any
 
+# The runtime imports sibling modules before dispatching a script. Keep the
+# install root free of __pycache__ even when the caller did not set
+# PYTHONDONTWRITEBYTECODE (the OpenCode plugin does set it as well).
+sys.dont_write_bytecode = True
+
 RUNTIME_SCHEMA = 1
 # Supported interpreter range. scripts/claude-seo and install.ps1 repeat these
 # bounds, and tests/test_python_range.py keeps every copy in step. 3.15 waits
@@ -30,6 +35,8 @@ RUNTIME_SCHEMA = 1
 MIN_PYTHON = (3, 11)
 MAX_PYTHON = (3, 14)
 LOCK_STALE_SECONDS = 30 * 60
+# Kept in sync with pyproject.toml [project.optional-dependencies] render.
+PLAYWRIGHT_REQUIREMENT = "playwright>=1.63.0,<2.0.0"
 SCRIPT_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*\.py$")
 EXTENSION_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 MANUAL_EXTENSION_SKILLS = {"banana": "seo-image-gen"}
@@ -48,6 +55,7 @@ ALLOWED_CORE_SCRIPTS = frozenset(
         "lcp_subparts.py", "lighthouse_agentic.py", "matomo_auth.py", "matomo_report.py", "metadata_template.py",
         "moz_api.py", "nlp_analyze.py", "page_checks.py", "pagespeed_check.py",
         "parasite_risk.py", "parse_html.py", "preload_check.py", "render_page.py",
+        "render_backend.py",
         "portability_check.py", "consistency_check.py",
         "schema_ecommerce_validate.py", "schema_generate.py", "seo_updates.py",
         "sitemap_discovery.py", "sync_flow.py", "transport_check.py", "ucp_check.py",
@@ -201,6 +209,73 @@ def _python_range_message() -> str:
     )
 
 
+def _venv_has_package(venv: Path, name: str) -> bool:
+    """Cheap check for an installed distribution inside the managed venv."""
+    try:
+        candidates = list(venv.glob("Lib/site-packages")) + list(
+            venv.glob("lib/python*/site-packages")
+        )
+    except OSError:
+        return False
+    return any((path / name).is_dir() for path in candidates)
+
+
+def _render_status(status: dict[str, Any]) -> dict[str, Any]:
+    """Resolve the render backend without launching a browser."""
+    try:
+        import render_backend
+    except (ImportError, OSError):
+        return {
+            "backend": "static",
+            "degraded": True,
+            "available": {"static": True},
+        }
+    available = render_backend.availability(
+        playwright=_venv_has_package(status["venv"], "playwright"),
+        managed=status["data_dir"] / "ms-playwright",
+    )
+    backend = render_backend.choose_backend("auto", available)
+    return {
+        "backend": backend,
+        "degraded": backend in ("cli", "static"),
+        "available": available,
+    }
+
+
+def _probe_render(status: dict[str, Any]) -> dict[str, Any]:
+    """Run the probing version under the managed interpreter, falling back cheaply."""
+    python = status["python_path"]
+    script = Path(__file__).resolve().parent / "render_backend.py"
+    if not python.is_file() or not script.is_file():
+        return _render_status(status)
+    try:
+        result = subprocess.run(
+            [str(python), str(script), "--probe", "--json"],
+            env=_safe_env(status),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=90,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return _render_status(status)
+    if result.returncode:
+        return _render_status(status)
+    try:
+        payload = json.loads(result.stdout)
+    except ValueError:
+        return _render_status(status)
+    backend = payload.get("backend")
+    if backend not in ("managed", "system", "channel", "cli", "static"):
+        return _render_status(status)
+    return {
+        "backend": backend,
+        "degraded": bool(payload.get("degraded")),
+        "available": payload.get("available") if isinstance(payload.get("available"), dict) else {},
+    }
+
+
 def _status(root: Path) -> dict[str, Any]:
     data_dir, mode = _data_dir(root)
     venv = data_dir / ".venv"
@@ -215,20 +290,17 @@ def _status(root: Path) -> dict[str, Any]:
     for key in ("runtime_schema", "requirements_sha256", "python"):
         if state.get(key) != expected[key]:
             reasons.append(f"{key} changed")
-    browser_dir = data_dir / "ms-playwright"
-    try:
-        browser_installed = browser_dir.is_dir() and any(
-            child.name.startswith(("chromium-", "chromium_headless_shell-"))
-            for child in browser_dir.iterdir()
-        )
-    except OSError:
-        browser_installed = False
+    render = _render_status(
+        {"data_dir": data_dir, "venv": venv, "python_path": python}
+    )
     return {
         "ready": not reasons,
         "mode": mode,
         "python_version": expected["python"],
         "plugin_version": expected["plugin_version"],
-        "browser_ready": bool(state.get("browser_ready")) and browser_installed,
+        "browser_ready": render["backend"] != "static",
+        "render_backend": render["backend"],
+        "degraded": render["degraded"],
         "reasons": reasons,
         "data_dir": data_dir,
         "venv": venv,
@@ -242,7 +314,26 @@ def _safe_env(status: dict[str, Any]) -> dict[str, str]:
     env = os.environ.copy()
     env["PYTHONUTF8"] = "1"
     env["PYTHONIOENCODING"] = "utf-8"
-    env["PLAYWRIGHT_BROWSERS_PATH"] = str(status["data_dir"] / "ms-playwright")
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    managed = status["data_dir"] / "ms-playwright"
+    env["OPENCODE_SEO_BROWSERS_PATH"] = str(managed)
+
+    # An empty managed directory must not shadow Playwright's normal cache or a
+    # path the caller configured. Keep a working caller value; otherwise unset
+    # the variable so Playwright falls back to the system browser cache.
+    try:
+        import render_backend
+
+        has_managed = render_backend.has_chromium(managed)
+        existing = env.get("PLAYWRIGHT_BROWSERS_PATH")
+        has_existing = bool(existing) and render_backend.has_chromium(Path(existing))
+    except (ImportError, OSError):
+        has_managed = False
+        has_existing = False
+    if has_managed:
+        env["PLAYWRIGHT_BROWSERS_PATH"] = str(managed)
+    elif not has_existing:
+        env.pop("PLAYWRIGHT_BROWSERS_PATH", None)
     return env
 
 
@@ -374,21 +465,47 @@ def command_setup(args: argparse.Namespace) -> int:
                 stage="dependency installation",
             )
             if not args.skip_browser:
+                # Playwright is an optional render extra. The package alone
+                # enables the system and channel backends with no browser
+                # download; Chromium is only fetched for the managed backend.
+                browser_env = dict(env)
+                browser_env["PLAYWRIGHT_BROWSERS_PATH"] = str(
+                    data_dir / "ms-playwright"
+                )
+                download_chromium = not getattr(args, "playwright", False)
                 try:
                     _run_checked(
-                        [str(staged_python), "-m", "playwright", "install", "chromium"],
+                        [
+                            str(staged_python),
+                            "-m",
+                            "pip",
+                            "install",
+                            "--disable-pip-version-check",
+                            PLAYWRIGHT_REQUIREMENT,
+                        ],
                         env=env,
-                        stage="Chromium installation",
+                        stage="Playwright installation",
                     )
-                    browser_ready = True
+                    if download_chromium:
+                        _run_checked(
+                            [str(staged_python), "-m", "playwright", "install", "chromium"],
+                            env=browser_env,
+                            stage="Chromium installation",
+                        )
                 except RuntimeError as exc:
                     print(f"Browser setup incomplete: {_redact(str(exc))}", file=sys.stderr)
+            browser_ready = _venv_has_package(staged, "playwright") and _render_status(
+                {
+                    "data_dir": data_dir,
+                    "venv": staged,
+                    "python_path": _venv_python(staged),
+                }
+            )["backend"] == "managed"
+            validation = "import bs4, lxml, lxml_html_clean, requests, trafilatura"
+            if not args.skip_browser and _venv_has_package(staged, "playwright"):
+                validation += ", playwright"
             _run_checked(
-                [
-                    str(staged_python),
-                    "-c",
-                    "import bs4, lxml, lxml_html_clean, playwright, requests, trafilatura",
-                ],
+                [str(staged_python), "-c", validation],
                 env=env,
                 stage="runtime import validation",
             )
@@ -414,10 +531,24 @@ def command_setup(args: argparse.Namespace) -> int:
                 _replace_with_retry(backup, final_venv)
         print(f"{_product()} setup failed: {_redact(str(exc))}", file=sys.stderr)
         return 1
-    if browser_ready or args.skip_browser:
-        print(f"{_product()} runtime is ready.")
+    render = _render_status(
+        {
+            "data_dir": data_dir,
+            "venv": final_venv,
+            "python_path": _venv_python(final_venv),
+        }
+    )
+    backend = render["backend"]
+    if args.skip_browser or backend != "static":
+        suffix = "" if backend in ("managed", "system", "channel") else f" Render backend: {backend} (degraded)."
+        print(f"{_product()} runtime is ready.{suffix}")
         return 0
-    print("Core runtime is ready, but Chromium is unavailable. Run setup again to enable rendered-page features.", file=sys.stderr)
+    print(
+        "Core runtime is ready, but no browser render backend is available. "
+        "Install Chrome or Edge, or run setup again with --with-browser to "
+        "download managed Chromium.",
+        file=sys.stderr,
+    )
     return 10
 
 
@@ -464,12 +595,15 @@ def command_run(args: argparse.Namespace) -> int:
 
 def command_doctor(args: argparse.Namespace) -> int:
     status = _status(_root())
+    render = _probe_render(status)
     public = {
         "ready": status["ready"],
         "mode": status["mode"],
         "plugin_version": status["plugin_version"],
         "python_version": status["python_version"],
-        "browser_ready": status["browser_ready"],
+        "browser_ready": render["backend"] != "static",
+        "render_backend": render["backend"],
+        "degraded": render["degraded"],
         "reasons": status["reasons"],
     }
     if args.json:
@@ -479,6 +613,10 @@ def command_doctor(args: argparse.Namespace) -> int:
         print(f"Install mode: {public['mode']}")
         print(f"Python: {public['python_version']}")
         print(f"Chromium: {'ready' if public['browser_ready'] else 'not installed'}")
+        print(
+            f"Render backend: {public['render_backend']}"
+            + (" (degraded)" if public["degraded"] else "")
+        )
         for reason in public["reasons"]:
             print(f"Reason: {reason}")
     return 0 if status["ready"] else 3
@@ -492,6 +630,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
     setup = sub.add_parser("setup", help="create or refresh the isolated runtime")
     setup.add_argument("--skip-browser", action="store_true")
+    setup.add_argument(
+        "--playwright",
+        action="store_true",
+        help="install Playwright for system/channel rendering without downloading Chromium",
+    )
     setup.set_defaults(func=command_setup)
     doctor = sub.add_parser("doctor", help="check runtime readiness without changing it")
     doctor.add_argument("--json", action="store_true")

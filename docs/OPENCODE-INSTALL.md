@@ -39,8 +39,31 @@ The runtime directory is OpenCode-only: it does not ship `AGENTS.md`, the
 Claude hook manifest, the Node hook bridge, the Claude launchers, or
 `__pycache__`.
 
-It also runs the managed Python setup with `--skip-browser` by default. Use
-`--with-browser` to install Chromium, or `--no-setup` to skip Python setup.
+It also runs the managed Python setup with `--skip-browser` by default.
+`--skip-browser` means "install neither Playwright nor Chromium", not "there is
+no browser": OpenCode SEO still uses an installed Chrome or Edge through the
+`cli` backend. Use `--playwright` to install the Playwright package without a
+browser download (enables the `system` and `channel` backends), `--with-browser`
+to also download managed Chromium, or `--no-setup` to skip Python setup.
+
+### Rendering backends
+
+The renderer picks a backend without downloading anything unless you ask:
+
+| Backend | What it uses | Cost |
+|---|---|---|
+| `managed` | Chromium under `opencode-seo/ms-playwright` | 150 MB download, only with `--with-browser` |
+| `system` | Chromium already in Playwright's cache | 0 MB |
+| `channel` | Installed Chrome or Edge, resolved by Playwright | 0 MB |
+| `cli` | `chrome --headless=new --dump-dom` | 0 MB, no accessibility tree |
+| `static` | Raw HTTP plus BeautifulSoup | 0 MB, no JavaScript |
+
+`auto` tries them in that order. Force one with `--backend` or the
+`OPENCODE_SEO_RENDER` environment variable. `system` and `channel` need the
+Playwright package (`--playwright`, or `--with-browser` which includes it) but
+no browser download. `seo({"action": "doctor"})` reports the active
+`render_backend` and whether it is `degraded` (the `cli` and `static` backends
+are degraded).
 
 ### Install somewhere else
 

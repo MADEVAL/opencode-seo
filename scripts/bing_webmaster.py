@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Bing Webmaster Tools API client for Claude SEO.
+Bing Webmaster Tools API client for OpenCode SEO.
 
 Queries the Bing Webmaster API for inbound link data, referring domain counts,
 and comparison between properties accessible to the same API account.
@@ -30,6 +30,7 @@ sys.path.insert(0, _SCRIPTS_DIR)
 try:
     from backlinks_auth import get_bing_api_key, get_bing_verified_sites
     from google_auth import validate_url
+    from url_safety import PRODUCT_USER_AGENT
 except ImportError:
     print("Error: backlinks_auth.py and google_auth.py required in scripts/", file=sys.stderr)
     sys.exit(1)
@@ -75,7 +76,7 @@ def _bing_request(endpoint: str, api_key: str, params: Optional[dict] = None,
 
     headers = {
         "Content-Type": "application/json",
-        "User-Agent": "ClaudeSEO/1.8.0",
+        "User-Agent": PRODUCT_USER_AGENT,
     }
 
     try:
@@ -550,7 +551,7 @@ def main():
         result = {
             "status": "error",
             "data": None,
-            "error": "No Bing Webmaster API key configured. Run backlinks_auth.py --setup through the claude-seo launcher.",
+            "error": "No Bing Webmaster API key configured. Run backlinks_auth.py --setup through the OpenCode SEO runtime launcher.",
             "metadata": {"source": "bing_webmaster"},
         }
         if args.json:

@@ -83,15 +83,20 @@ try:
         sync_playwright,
     )
 except ImportError:
-    print(
-        "Error: playwright required. Install with: "
-        "pip install playwright && playwright install chromium"
-    )
-    sys.exit(1)
+    # Playwright is an optional render extra. Importing this module must still
+    # work so help, path and hygiene tests do not need the browser package.
+    sync_playwright = None
+    PlaywrightTimeout = Exception  # type: ignore[assignment,misc]
 
 _SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
+from render_backend import (  # noqa: E402
+    BACKENDS,
+    launch_playwright,
+    normalize_backend,
+    plan_backends,
+)
 from url_safety import (  # noqa: E402  (sys.path massage above is intentional)
     URLSafetyError,
     make_safe_playwright_route_handler,
@@ -126,7 +131,7 @@ HIDE_OVERLAYS_MAX_MS = 5000  # the one pass that hides overlays, on a large DOM
 
 # Where a page-side step runs and where it leaves its result for the read.
 _ROOT = ":root"
-_RESULT_ATTR = "data-claude-seo-result"
+_RESULT_ATTR = "data-opencode-seo-result"
 _RESULT_MAX_CHARS = 1000
 _CALL_IDS = itertools.count(1)
 
@@ -184,7 +189,7 @@ _JS_HIDE_OVERLAYS = """() => {
     const cs = getComputedStyle(el);
     if (cs.position !== 'fixed' && cs.position !== 'sticky') continue;
     if (cs.display === 'none' || cs.visibility === 'hidden') continue;
-    if (el.closest('[data-claude-seo-hidden]')) continue;
+    if (el.closest('[data-opencode-seo-hidden]')) continue;
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) continue;
     if (cs.position === 'fixed') {
@@ -196,7 +201,7 @@ _JS_HIDE_OVERLAYS = """() => {
       const offset = parseFloat(cs.bottom);
       if (Number.isNaN(offset) || Math.abs(r.bottom + offset - vh) > 2) continue;
     }
-    el.setAttribute('data-claude-seo-hidden', '');
+    el.setAttribute('data-opencode-seo-hidden', '');
     el.style.setProperty('visibility', 'hidden', 'important');
     hidden++;
   }
@@ -407,6 +412,7 @@ def capture_screenshot(
     timeout: int = 30000,
     scroll_through: bool = True,
     hide_overlays: bool = False,
+    backend: str | None = None,
 ) -> dict:
     """
     Capture a screenshot of a web page.
@@ -421,6 +427,7 @@ def capture_screenshot(
             so lazy images load (bounded). Ignored for viewport captures.
         hide_overlays: Hide fixed or stuck floating elements before the
             capture. Off by default: a visual audit must see them.
+        backend: Playwright browser backend: auto, managed, system or channel.
 
     Returns:
         Dictionary with capture results
@@ -437,10 +444,31 @@ def capture_screenshot(
         "settle": None,
         "hide_overlays": hide_overlays,
         "overlays_hidden": None,
+        "render_backend": None,
     }
 
     if viewport not in VIEWPORTS:
         result["error"] = f"Invalid viewport: {viewport}. Choose from: {list(VIEWPORTS.keys())}"
+        return result
+    try:
+        requested_backend = normalize_backend(backend)
+    except ValueError as exc:
+        result["error"] = str(exc)
+        return result
+    if requested_backend == "cli":
+        result["error"] = (
+            "screenshot capture needs a Playwright backend; the Chrome CLI "
+            "backend returns DOM only"
+        )
+        return result
+    if requested_backend == "static":
+        result["error"] = "screenshot capture needs a browser backend"
+        return result
+    if sync_playwright is None:
+        result["error"] = (
+            "playwright is required for screenshots. Install the render extra: "
+            "pip install -e \".[render]\""
+        )
         return result
 
     try:
@@ -462,10 +490,33 @@ def capture_screenshot(
     vp = VIEWPORTS[viewport]
     route_handler = make_safe_playwright_route_handler()
     loaded = False
+    plan = [
+        item
+        for item in plan_backends(requested_backend)
+        if item in ("managed", "system", "channel")
+    ]
+    if not plan:
+        result["error"] = (
+            "no Playwright browser backend is available. Install Playwright and "
+            "Chromium, install Chrome or Edge, or run setup with --with-browser."
+        )
+        return result
 
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            browser = None
+            launch_errors: list[str] = []
+            for candidate in plan:
+                try:
+                    browser = launch_playwright(p, candidate, headless=True)
+                    result["render_backend"] = candidate
+                    break
+                except Exception as exc:
+                    launch_errors.append(f"{candidate}: {exc}")
+            if browser is None:
+                raise RuntimeError(
+                    "no browser backend started: " + "; ".join(launch_errors)
+                )
             context = new_guarded_context(
                 browser,
                 route_handler,
@@ -563,6 +614,11 @@ def main():
              "before the capture. Off by default; do not use for a visual audit",
     )
     parser.add_argument("--json", action="store_true", help="Print the results as JSON")
+    parser.add_argument(
+        "--backend",
+        choices=[name for name in BACKENDS if name in ("auto", "managed", "system", "channel")],
+        help="Playwright browser backend (default: auto, or OPENCODE_SEO_RENDER)",
+    )
 
     args = parser.parse_args()
 
@@ -602,6 +658,7 @@ def main():
             timeout=args.timeout,
             scroll_through=not args.no_scroll,
             hide_overlays=args.hide_overlays,
+            backend=args.backend,
         )
         captures.append(result)
 

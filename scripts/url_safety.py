@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Canonical URL safety module for claude-seo.
+Canonical URL safety module for OpenCode SEO.
 
 Centralizes SSRF protection, DNS rebinding mitigation, and DNS-pinned HTTP
 fetching. Every script in this repository that accepts a user-supplied URL
@@ -92,12 +92,14 @@ in SECURITY.md.
 from __future__ import annotations
 
 import ipaddress
+import json
 import os
 import re
 import socket
 import threading
 import time
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Iterator, Optional
 from urllib.parse import urlparse
 
@@ -124,6 +126,7 @@ __all__ = [
     "safe_requests_head",
     "safe_requests_session",
     "make_safe_playwright_route_handler",
+    "PRODUCT_USER_AGENT",
     "DEFAULT_USER_AGENT",
     "DEFAULT_REQUEST_HEADERS",
 ]
@@ -892,13 +895,42 @@ def _pin_dns(
         _dns_patch_lock.release()
 
 
-# The browser-like default User-Agent for every raw-HTTP fetch in claude-seo.
+def _product_version() -> str:
+    """Read the running product version without importing packaging metadata."""
+    override = os.environ.get("OPENCODE_SEO_VERSION")
+    if override and override.strip():
+        return override.strip()
+    root = Path(__file__).resolve().parent.parent
+    for manifest in (root / "package.json", root / ".claude-plugin" / "plugin.json"):
+        try:
+            value = json.loads(manifest.read_text(encoding="utf-8")).get("version")
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        except (OSError, ValueError):
+            pass
+    try:
+        match = re.search(
+            r'(?m)^version\s*=\s*"([^"]+)"',
+            (root / "pyproject.toml").read_text(encoding="utf-8"),
+        )
+        if match:
+            return match.group(1)
+    except OSError:
+        pass
+    return "0.0.0"
+
+
+# One product token for every user agent this project sends. Versioned so a
+# site operator can tell which runtime made a request.
+PRODUCT_USER_AGENT = f"OpenCodeSEO/{_product_version()}"
+
+# The browser-like default User-Agent for every raw-HTTP fetch.
 # ``fetch_page.py`` has carried these defaults since v1.2.1 (issue #9); they
 # live here now because ``url_safety`` is the lower layer, so this module is
 # the one place to change them. ``fetch_page.py`` imports them back.
 DEFAULT_USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/150.0.7871.114 Safari/537.36 ClaudeSEO/2.0"
+    f"(KHTML, like Gecko) Chrome/150.0.7871.114 Safari/537.36 {PRODUCT_USER_AGENT}"
 )
 
 # Without these, ``requests`` announces itself as
@@ -1391,7 +1423,7 @@ def _cli() -> None:
     import sys
 
     parser = argparse.ArgumentParser(
-        description="Validate a URL against claude-seo's SSRF policy."
+        description="Validate a URL against OpenCode SEO's SSRF policy."
     )
     parser.add_argument("url", help="URL to validate")
     parser.add_argument(

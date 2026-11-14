@@ -53,6 +53,7 @@ def install_package(
     *,
     setup: bool = True,
     with_browser: bool = False,
+    with_playwright: bool = False,
     dry_run: bool = False,
 ) -> dict[str, int]:
     check_source()
@@ -93,7 +94,9 @@ def install_package(
     if setup:
         runtime = root / "scripts" / "runtime.py"
         command = [sys.executable, str(runtime), "setup"]
-        if not with_browser:
+        if with_playwright and not with_browser:
+            command.append("--playwright")
+        elif not with_browser:
             command.append("--skip-browser")
         result = subprocess.run(command, cwd=root, check=False)
         if result.returncode not in (0, 10):
@@ -133,7 +136,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config-dir", help="Override the OpenCode config directory")
     parser.add_argument("--no-setup", action="store_true", help="Skip Python runtime setup")
-    parser.add_argument("--with-browser", action="store_true", help="Install Chromium during setup")
+    parser.add_argument(
+        "--with-browser",
+        action="store_true",
+        help="Download managed Playwright Chromium during setup (about 150 MB)",
+    )
+    parser.add_argument(
+        "--playwright",
+        action="store_true",
+        help="Install Playwright for system/channel rendering without downloading Chromium",
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--uninstall", action="store_true")
     args = parser.parse_args(argv)
@@ -156,6 +168,7 @@ def main(argv: list[str] | None = None) -> int:
         target,
         setup=not args.no_setup,
         with_browser=args.with_browser,
+        with_playwright=args.playwright,
         dry_run=args.dry_run,
     )
     print(f"{'Would install' if args.dry_run else 'Installed'} OpenCode SEO into {target}")

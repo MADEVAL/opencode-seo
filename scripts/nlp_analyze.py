@@ -32,7 +32,12 @@ try:
         redact_google_api_key,
         validate_url,
     )
-    from url_safety import URLSafetyError, decode_response_text, safe_requests_get
+    from url_safety import (
+        PRODUCT_USER_AGENT,
+        URLSafetyError,
+        decode_response_text,
+        safe_requests_get,
+    )
 except ImportError:
     import os
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -42,7 +47,12 @@ except ImportError:
         redact_google_api_key,
         validate_url,
     )
-    from url_safety import URLSafetyError, decode_response_text, safe_requests_get
+    from url_safety import (
+        PRODUCT_USER_AGENT,
+        URLSafetyError,
+        decode_response_text,
+        safe_requests_get,
+    )
 
 NLP_ENDPOINT = "https://language.googleapis.com/v2/documents:annotateText"
 NLP_V1_ENTITIES_ENDPOINT = "https://language.googleapis.com/v1/documents:analyzeEntities"
@@ -287,7 +297,7 @@ def analyze_url(
         resp = safe_requests_get(
             url,
             timeout=30,
-            headers={"User-Agent": "Mozilla/5.0 (compatible; ClaudeSEO/1.7 NLP Analyzer)"},
+            headers={"User-Agent": f"Mozilla/5.0 (compatible; {PRODUCT_USER_AGENT} NLP Analyzer)"},
         )
         resp.raise_for_status()
         html = decode_response_text(resp)

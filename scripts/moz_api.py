@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Moz Link Explorer API client for Claude SEO.
+Moz Link Explorer API client for OpenCode SEO.
 
 Queries the Moz v2 REST API for Domain Authority, Page Authority,
 Spam Score, link counts, and referring domain data. Uses a conservative
@@ -35,6 +35,7 @@ try:
     from backlinks_auth import get_moz_api_key
     from google_auth import validate_url
     import seo_paths
+    from url_safety import PRODUCT_USER_AGENT
 except ImportError:
     print("Error: backlinks_auth.py and google_auth.py required in scripts/", file=sys.stderr)
     sys.exit(1)
@@ -111,7 +112,7 @@ def _moz_request(path: str, body: dict, api_key: str) -> dict:
 
     headers = {
         "Content-Type": "application/json",
-        "User-Agent": "ClaudeSEO/1.8.0",
+        "User-Agent": PRODUCT_USER_AGENT,
     }
     basic_auth = _moz_basic_auth_header(api_key)
     if basic_auth:
@@ -347,7 +348,7 @@ def get_top_pages(domain: str, api_key: str, limit: int = 50) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Moz Link Explorer API client for Claude SEO"
+        description="Moz Link Explorer API client for OpenCode SEO"
     )
     parser.add_argument(
         "command",

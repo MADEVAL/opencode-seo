@@ -199,4 +199,3 @@ outputs/
 # generated copies can never be committed.
 !.opencode/skills/*/templates/**
 !.opencode/skills/*/assets/templates/**
-!.opencode/skills/*/references/**
